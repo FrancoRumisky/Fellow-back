@@ -1,4 +1,4 @@
-var domainUrl = "http://fellowme.42web.io/";
+var domainUrl = "http://18.188.27.2/";
 var sourceUrl = `${domainUrl}public/storage/`;
 
 var app = {
