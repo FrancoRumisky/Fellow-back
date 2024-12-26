@@ -47,13 +47,29 @@ class PostController extends Controller
         $dir = $request->input('order.0.dir');
 
         $totalFiltered = $totalData;
-        if (empty($request->input('search.value'))) {
-            $result = Post::offset($start)->limit($limit)->orderBy($order, $dir)->get();
-        } else {
+
+        if (!empty($request->input('search.value'))) {
             $search = $request->input('search.value');
-            $result = Post::Where('name', 'LIKE', "%{$search}%")->offset($start)->limit($limit)->orderBy($order, $dir)->get();
-            $totalFiltered = Post::Where('name', 'LIKE', "%{$search}%")->count();
+
+    
+            $result = Post::where('description', 'LIKE', "%{$search}%")
+            ->orWhere('hashtags', 'LIKE', "%{$search}%")
+            ->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+
+            
+            $totalFiltered = Post::where('description', 'LIKE', "%{$search}%")
+            ->orWhere('hashtags', 'LIKE', "%{$search}%")
+            ->count();
+        } else {
+            $result = Post::offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
         }
+
         $data = [];
         foreach ($result as $item) {
 
