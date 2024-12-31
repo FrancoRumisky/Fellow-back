@@ -118,6 +118,61 @@ class PostController extends Controller
         exit();
     }
 
+    public function postsByInterestAndDescription(Request $request)
+    {
+        $interestId = $request->input('interest_id'); // Obtener el ID del interés
+        $search = $request->input('search_query');   // Obtener el texto de búsqueda
+        $limit = $request->input('length', 10);      // Cantidad de resultados por página
+        $start = $request->input('start', 0);        // Inicio de paginación
+
+        // Consulta base para filtrar posts
+        $query = Post::query();
+
+        // Filtrar por interés si se proporciona
+        if (!empty($interestId)) {
+            $query->whereRaw("FIND_IN_SET(?, interestIds)", [$interestId]);
+        }
+
+        // Filtrar por descripción o hashtags si se proporciona un texto de búsqueda
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'LIKE', "%{$search}%")
+                ->orWhere('hashtags', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Contar resultados
+        $totalFiltered = $query->count();
+
+        // Obtener resultados paginados
+        $result = $query->offset($start)
+            ->limit($limit)
+            ->orderBy('id', 'DESC')
+            ->get();
+
+        // Construir respuesta
+        $data = [];
+        foreach ($result as $item) {
+            $postContent = PostContent::where('post_id', $item->id)->get();
+            $contentType = $postContent->count() == 0 ? 2 : $postContent->first()->content_type;
+
+            $data[] = [
+                'id' => $item->id,
+                'description' => $item->description ?? 'No description',
+                'contentType' => $contentType,
+                'views' => $item->views ?? 0,
+                'likes' => $item->likes ?? 0,
+                'created_at' => $item->created_at->format('d-m-Y'),
+            ];
+        }
+
+        return response()->json([
+            'recordsTotal' => $totalFiltered,
+            'recordsFiltered' => $totalFiltered,
+            'data' => $data,
+        ]);
+    }
+
     public function createStory(Request $request)
     {
         $validator = Validator::make($request->all(), [

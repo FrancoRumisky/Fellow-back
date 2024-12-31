@@ -99,6 +99,7 @@ Route::post('reportPost', [PostController::class, 'reportPost'])->middleware('ch
 
 Route::post('addPost', [PostController::class, 'addPost'])->middleware('checkHeader');
 // Route::post('fetchPosts', [PostController::class, 'fetchPosts'])->middleware('checkHeader');
+Route::post('postsByInterestAndDescription', [PostController::class, 'postsByInterestAndDescription'])->middleware('checkHeader');
 Route::post('addComment', [PostController::class, 'addComment'])->middleware('checkHeader');
 Route::post('fetchComments', [PostController::class, 'fetchComments'])->middleware('checkHeader');
 Route::post('deleteComment', [PostController::class, 'deleteComment'])->middleware('checkHeader');
