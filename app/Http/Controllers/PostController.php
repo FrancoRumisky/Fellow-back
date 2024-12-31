@@ -162,7 +162,12 @@ class PostController extends Controller
                 'contentType' => $contentType,
                 'views' => $item->views ?? 0,
                 'likes' => $item->likes ?? 0,
-                'created_at' => $item->created_at->format('Y-m-d'), // Cambia a formato ISO 8601
+                'created_at' => $item->created_at->format('Y-m-d'), // Cambia a formato ISO 8601,
+                'user' => [
+                    'id' => $item->user->id ?? null,
+                    'username' => $item->user->username ?? 'Unknown',
+                    'profilePicture' => $item->user->profile_picture ?? '',
+                ]
             ];
         }
 
