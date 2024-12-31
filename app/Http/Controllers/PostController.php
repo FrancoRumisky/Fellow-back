@@ -182,7 +182,7 @@ class PostController extends Controller
 
         // Filtrar por interés si está presente
         if (!empty($interestId)) {
-            $query->whereNotNull('interestIds') // Solo posts con intereses
+            $query->whereNotNull('interest_ids') // Solo posts con intereses
                 ->whereRaw("FIND_IN_SET(?, interest_ids)", [$interestId]);
         }
         // Filtrar por descripción o hashtags si hay búsqueda
