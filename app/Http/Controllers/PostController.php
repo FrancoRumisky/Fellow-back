@@ -120,20 +120,72 @@ class PostController extends Controller
 
     public function postsByInterestAndDescription(Request $request)
     {
-        $interestId = $request->input('interest_id'); // Obtener el ID del interés
-        $search = $request->input('search_query');   // Obtener el texto de búsqueda
-        $limit = $request->input('length', 10);      // Cantidad de resultados por página
-        $start = $request->input('start', 0);        // Inicio de paginación
+        // Validación de parámetros
+        $validator = Validator::make($request->all(), [
+            'my_user_id' => 'required',
+            'search_query' => 'nullable|string',
+            'interest_id' => 'nullable|integer',
+            'start' => 'nullable|integer',
+            'length' => 'nullable|integer',
+        ]);
 
-        // Consulta base para filtrar posts
-        $query = Post::query();
+        if ($validator->fails()) {
+            $messages = $validator->errors()->all();
+            $msg = $messages[0];
+            return response()->json(['status' => false, 'message' => $msg]);
+        }
 
-        // Filtrar por interés si se proporciona
+        // Obtener el usuario
+        $user = Users::where('id', $request->my_user_id)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User Not Found',
+            ]);
+        }
+
+        // Obtener IDs de usuarios bloqueados
+        $blockUserIds = explode(',', $user->block_user_ids);
+
+        // Obtener historias de usuarios seguidos
+        $followingUsers = FollowingList::where('my_user_id', $request->my_user_id)
+            ->whereRelation('story', 'created_at', '>=', now()->subDay()->toDateTimeString())
+            ->with('user', 'user.images')
+            ->whereRelation('user', 'is_block', 0)
+            ->get()
+            ->pluck('user');
+
+        foreach ($followingUsers as $followingUser) {
+            $stories = Story::where('user_id', $followingUser->id)
+                ->where('created_at', '>=', now()->subDay()->toDateTimeString())
+                ->get();
+
+            foreach ($stories as $story) {
+                $story->storyView = $story->view_by_user_ids
+                    ? in_array($request->my_user_id, explode(',', $story->view_by_user_ids))
+                    : false;
+            }
+            $followingUser->stories = $stories;
+        }
+
+        // Parámetros para paginación y filtro
+        $limit = $request->input('length', 10);
+        $start = $request->input('start', 0);
+        $search = $request->input('search_query');
+        $interestId = $request->input('interest_id');
+
+        // Consulta de posts
+        $query = Post::with(['content', 'user', 'user.stories', 'user.images'])
+        ->whereRelation('user', 'is_block', 0) // Filtrar usuarios no bloqueados
+        ->whereNotIn('user_id', array_merge($blockUserIds)); // Excluir bloqueados
+
+        // Filtrar por interés si está presente
         if (!empty($interestId)) {
             $query->whereRaw("FIND_IN_SET(?, interestIds)", [$interestId]);
         }
 
-        // Filtrar por descripción o hashtags si se proporciona un texto de búsqueda
+        // Filtrar por descripción o hashtags si hay búsqueda
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'LIKE', "%{$search}%")
@@ -141,41 +193,38 @@ class PostController extends Controller
             });
         }
 
-        // Contar resultados
+        // Ordenar por fecha de creación (más recientes primero)
+        $query->orderBy('created_at', 'DESC');
+
+        // Paginación
         $totalFiltered = $query->count();
+        $fetchPosts = $query->offset($start)->limit($limit)->get();
 
-        // Obtener resultados paginados
-        $result = $query->offset($start)
-            ->limit($limit)
-            ->orderBy('id', 'DESC')
-            ->get();
-
-        // Construir respuesta
-        $data = [];
-        foreach ($result as $item) {
-            $postContent = PostContent::where('post_id', $item->id)->get();
-            $contentType = $postContent->count() == 0 ? 2 : $postContent->first()->content_type;
-
-            $data[] = [
-                'id' => $item->id,
-                'description' => $item->description ?? 'No description',
-                'contentType' => $contentType,
-                'views' => $item->views ?? 0,
-                'likes' => $item->likes ?? 0,
-                'created_at' => $item->created_at->format('Y-m-d'), // Cambia a formato ISO 8601,
-                'user' => [
-                    'id' => $item->user->id ?? null,
-                    'username' => $item->user->username ?? 'Unknown',
-                    'profilePicture' => $item->user->profile_picture ?? '',
-                ]
-            ];
+        // Marcar "Me gusta" para cada post
+        foreach ($fetchPosts as $fetchPost) {
+            $isPostLike = Like::where('user_id', $request->my_user_id)
+                ->where('post_id', $fetchPost->id)
+                ->first();
+            $fetchPost->is_like = $isPostLike ? 1 : 0;
         }
 
-        return response()->json([
-            'recordsTotal' => $totalFiltered,
-            'recordsFiltered' => $totalFiltered,
-            'data' => $data,
-        ]);
+        // Respuesta
+        if (!$fetchPosts->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Filtered posts fetched successfully',
+                'data' => [
+                    'users_stories' => $followingUsers,
+                    'posts' => $fetchPosts,
+                    'recordsFiltered' => $totalFiltered,
+                ]
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'No posts found',
+            ]);
+        }
     }
 
     public function createStory(Request $request)
