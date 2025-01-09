@@ -33,8 +33,8 @@ class EventController extends Controller
         $userLng = $request->user_lng;
         $interest = $request->interest;
 
-        // Obtener eventos con datos del organizador
-        $query = Event::with('organizer');
+        // Obtener eventos
+        $query = Event::query()->with(['organizer.images']); // Incluir imágenes del organizador
 
         // Filtrar por interés
         if (!empty($interest)) {
@@ -46,14 +46,14 @@ class EventController extends Controller
 
         // Calcular proximidad
         $events = $query->get()->map(function ($event) use ($userLat, $userLng) {
-            $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
-            $event->distance = $distance;
-            return $event;
-        })->sortBy('distance')->values();
+                $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
+                $event->distance = $distance;
+                return $event;
+            })->sortBy('distance')->values();
 
         return response()->json(['status' => true, 'data' => $events]);
     }
-
+    
     private function calculateDistance($lat1, $lng1, $lat2, $lng2)
     {
         $earthRadius = 6371; // Radio de la tierra en kilómetros
