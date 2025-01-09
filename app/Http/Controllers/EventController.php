@@ -5,9 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\User;
 
 class EventController extends Controller
 {
+
+    public function organizer()
+    {
+        return $this->belongsTo(User::class, 'organizer_id', 'id'); // Ajusta el modelo y campos según tu base de datos
+    }
+
+
     // Obtener lista de eventos
     public function getEvents(Request $request)
     {
@@ -25,8 +33,8 @@ class EventController extends Controller
         $userLng = $request->user_lng;
         $interest = $request->interest;
 
-        // Obtener eventos
-        $query = Event::query();
+        // Obtener eventos con datos del organizador
+        $query = Event::with('organizer');
 
         // Filtrar por interés
         if (!empty($interest)) {
@@ -38,26 +46,14 @@ class EventController extends Controller
 
         // Calcular proximidad
         $events = $query->get()->map(function ($event) use ($userLat, $userLng) {
-            $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
-            $event->distance = $distance;
-            return $event;
-        })->sortBy('distance')->values();
+                $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
+                $event->distance = $distance;
+                return $event;
+            })->sortBy('distance')->values();
 
         return response()->json(['status' => true, 'data' => $events]);
     }
-
-    private function calculateDistance($lat1, $lng1, $lat2, $lng2)
-    {
-        $earthRadius = 6371; // Radio de la tierra en kilómetros
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLng = deg2rad($lng2 - $lng1);
-        $a = sin($dLat / 2) * sin($dLat / 2) +
-        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-        sin($dLng / 2) * sin($dLng / 2);
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        return $earthRadius * $c;
-    }
-
+    
     // Crear un evento
     public function createEvent(Request $request)
     {
