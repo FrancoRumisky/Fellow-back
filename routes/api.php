@@ -10,6 +10,7 @@ use App\Http\Controllers\RedeemRequestsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -117,3 +118,9 @@ Route::get('test', [UsersController::class, 'test'])->middleware('checkHeader');
 Route::get('deleteStoryFromWeb', [PostController::class, 'deleteStoryFromWeb'])->name('deleteStoryFromWeb');
 Route::post('storeFileGivePath', [SettingController::class, 'storeFileGivePath'])->middleware('checkHeader');
 Route::post('generateAgoraToken', [SettingController::class, 'generateAgoraToken'])->middleware('checkHeader');
+
+Route::post('getEvents', [EventController::class, 'getEvents'])->middleware('checkHeader');
+Route::post('createEvent', [EventController::class, 'createEvent'])->middleware('checkHeader');
+Route::post('updateEvent', [EventController::class, 'updateEvent'])->middleware('checkHeader');
+Route::post('deleteEvent', [EventController::class, 'deleteEvent'])->middleware('checkHeader');
+Route::post('getEventDetails', [EventController::class, 'getEventDetails'])->middleware('checkHeader');
