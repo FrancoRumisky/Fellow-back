@@ -46,14 +46,26 @@ class EventController extends Controller
 
         // Calcular proximidad
         $events = $query->get()->map(function ($event) use ($userLat, $userLng) {
-                $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
-                $event->distance = $distance;
-                return $event;
-            })->sortBy('distance')->values();
+            $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
+            $event->distance = $distance;
+            return $event;
+        })->sortBy('distance')->values();
 
         return response()->json(['status' => true, 'data' => $events]);
     }
-    
+
+    private function calculateDistance($lat1, $lng1, $lat2, $lng2)
+    {
+        $earthRadius = 6371; // Radio de la tierra en kilómetros
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+        sin($dLng / 2) * sin($dLng / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
+    }
+
     // Crear un evento
     public function createEvent(Request $request)
     {
