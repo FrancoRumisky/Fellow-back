@@ -6,6 +6,7 @@ use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use App\Models\Interest;
 
 class EventController extends Controller
 {
@@ -13,6 +14,11 @@ class EventController extends Controller
     public function organizer()
     {
         return $this->belongsTo(User::class, 'organizer_id', 'id'); // Ajusta el modelo y campos según tu base de datos
+    }
+
+    public function interests()
+    {
+        return $this->belongsToMany(Interest::class, 'event_interests', 'event_id', 'interest_id');
     }
 
 
@@ -34,11 +40,13 @@ class EventController extends Controller
         $interest = $request->interest;
 
         // Obtener eventos
-        $query = Event::query()->with(['organizer.images']); // Incluir imágenes del organizador
+        $query = Event::query()->with(['organizer.images', 'interests']);
 
         // Filtrar por interés
         if (!empty($interest)) {
-            $query->where('interests', 'LIKE', "%$interest%");
+            $query->whereHas('interests', function ($q) use ($interest) {
+                $q->where('name', 'LIKE', "%$interest%");
+            });
         }
 
         // Ordenar por fecha (más recientes primero)
@@ -46,10 +54,14 @@ class EventController extends Controller
 
         // Calcular proximidad
         $events = $query->get()->map(function ($event) use ($userLat, $userLng) {
-                $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
-                $event->distance = $distance;
-                return $event;
-            })->sortBy('distance')->values();
+            $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
+            $event->distance = $distance;
+
+            // Agregar nombres de intereses
+            $event->interest_names = $event->interests->pluck('name');
+            return $event;
+        })->sortBy('distance')->values();
+
 
         return response()->json(['status' => true, 'data' => $events]);
     }
