@@ -16,10 +16,6 @@ class EventController extends Controller
         return $this->belongsTo(User::class, 'organizer_id', 'id'); // Ajusta el modelo y campos según tu base de datos
     }
 
-    public function interests()
-    {
-        return $this->belongsToMany(Interest::class, 'event_interests', 'event_id', 'interest_id');
-    }
 
 
     // Obtener lista de eventos
@@ -39,29 +35,29 @@ class EventController extends Controller
         $userLng = $request->user_lng;
         $interest = $request->interest;
 
-        // Obtener eventos
-        $query = Event::query()->with(['organizer.images', 'interests']);
+        // Obtener eventos con organizador
+        $query = Event::query()->with(['organizer.images']);
 
-        // Filtrar por interés
+        // Filtrar por interés si está presente
         if (!empty($interest)) {
-            $query->whereHas('interests', function ($q) use ($interest) {
-                $q->where('name', 'LIKE', "%$interest%");
-            });
+            $query->where('interests', 'LIKE', "%$interest%");
         }
 
-        // Ordenar por fecha (más recientes primero)
+        // Ordenar por fecha
         $query->orderBy('start_date', 'asc');
 
         // Calcular proximidad
         $events = $query->get()->map(function ($event) use ($userLat, $userLng) {
-            $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
-            $event->distance = $distance;
+                $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
+                $event->distance = $distance;
 
-            // Agregar nombres de intereses
-            $event->interest_names = $event->interests->pluck('name');
-            return $event;
-        })->sortBy('distance')->values();
+                // Obtener nombres de intereses
+                $interestIds = explode(',', $event->interests);
+                $interestNames = Interest::whereIn('id', $interestIds)->pluck('name')->toArray();
+                $event->interest_names = $interestNames;
 
+                return $event;
+            })->sortBy('distance')->values();
 
         return response()->json(['status' => true, 'data' => $events]);
     }
