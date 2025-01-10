@@ -54,7 +54,7 @@ class EventController extends Controller
                 // Obtener nombres de intereses
                 $interestIds = explode(',', $event->interests);
                 $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
-                $event->interest_names = $interestNames;
+                $event->interest = $interestNames;
 
                 return $event;
             })->sortBy('distance')->values();
