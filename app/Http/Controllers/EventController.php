@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\Interest;
+use App\Models\Report;
 
 class EventController extends Controller
 {
@@ -77,28 +78,55 @@ class EventController extends Controller
     // Crear un evento
     public function createEvent(Request $request)
     {
+        // Validar los datos de entrada
         $validator = Validator::make($request->all(), [
             'title' => 'required|string',
             'start_date' => 'required|date',
-            'end_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'start_time' => 'required',
             'end_time' => 'required',
             'location' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
-            'capacity' => 'required|integer',
+            'capacity' => 'required|integer|min:1',
             'is_public' => 'required|boolean',
+            'organizer_id' => 'required|integer|exists:users,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Imagen opcional
+            'interests' => 'nullable|string', // IDs de intereses separados por comas
         ]);
 
+        // Manejar errores de validación
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
         }
 
+        // Manejar la imagen si se proporciona
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('events', 'public'); // Guardar imagen en almacenamiento público
+        }
+
+        // Crear el evento
         $event = new Event();
-        $event->fill($request->all());
+        $event->title = $request->title;
+        $event->start_date = $request->start_date;
+        $event->end_date = $request->end_date;
+        $event->start_time = $request->start_time;
+        $event->end_time = $request->end_time;
+        $event->location = $request->location;
+        $event->latitude = $request->latitude;
+        $event->longitude = $request->longitude;
+        $event->capacity = $request->capacity;
+        $event->is_public = $request->is_public;
+        $event->organizer_id = $request->organizer_id;
+        $event->available_slots = $request->capacity; // Inicialmente los espacios disponibles son iguales a la capacidad
+        $event->image = $imagePath; // Asignar la ruta de la imagen si existe
+        $event->interests = $request->interests; // Guardar los intereses relacionados
+
+        // Guardar el evento en la base de datos
         $event->save();
 
-        return response()->json(['status' => true, 'message' => 'Event created successfully', 'data' => $event]);
+        return response()->json(['status' => true, 'message' => 'Evento creado exitosamente', 'data' => $event]);
     }
 
     // Actualizar un evento
@@ -154,5 +182,45 @@ class EventController extends Controller
         $event = Event::find($request->event_id);
 
         return response()->json(['status' => true, 'data' => $event]);
+    }
+
+    //Reportar un evento
+    public function reportEvent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'event_id' => 'required',
+            'reason' => 'required',
+            'description' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $messages = $validator->errors()->all();
+            $msg = $messages[0];
+            return response()->json(['status' => false, 'message' => $msg]);
+        }
+
+        $event = Event::where('id', $request->event_id)->first();
+
+        if ($event != null) {
+            $reportType = 2; // Nuevo tipo para eventos
+
+            $report = new Report();
+            $report->type = $reportType; // Indica que es un reporte de evento
+            $report->event_id = $request->event_id; // Relaciona con el evento
+            $report->reason = $request->reason;
+            $report->description = $request->description;
+            $report->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Event Reported Successfully',
+                'data' => $report,
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Event Not Found',
+            ]);
+        }
     }
 }

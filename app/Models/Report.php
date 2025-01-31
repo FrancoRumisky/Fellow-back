@@ -17,4 +17,8 @@ class Report extends Model
         return $this->hasOne(Users::class, 'id', 'user_id');
     }
 
+    public function event()
+    {
+        return $this->hasOne(Event::class, 'id', 'event_id'); // Relación con eventos
+    }
 }
