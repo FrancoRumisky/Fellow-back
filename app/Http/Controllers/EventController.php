@@ -26,6 +26,8 @@ class EventController extends Controller
             'user_lat' => 'required|numeric',
             'user_lng' => 'required|numeric',
             'interest' => 'nullable|string',
+            'limit' => 'nullable|integer|min:1|max:10',
+            'offset' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -35,6 +37,8 @@ class EventController extends Controller
         $userLat = $request->user_lat;
         $userLng = $request->user_lng;
         $interest = $request->interest;
+        $limit = $request->input('limit', 10);
+        $offset = $request->input('offset', 0);
 
         // Obtener eventos con organizador
         $query = Event::query()->with(['organizer.images']);
@@ -46,6 +50,7 @@ class EventController extends Controller
 
         // Ordenar por fecha
         $query->orderBy('start_date', 'asc');
+        $query->skip($offset)->take($limit);
 
         // Calcular proximidad
         $events = $query->get()->map(function ($event) use ($userLat, $userLng) {
