@@ -43,22 +43,21 @@ class EventController extends Controller
         $offset = $request->input('offset',
             0
         );
-        $currentUserId = $request->user_lat; // Obtener el ID del usuario autenticado
+        $currentUserId = $request-> user_id; // Obtener ID del usuario actual
 
-        // Obtener eventos con organizador y asistentes
-        $query = Event::with(['organizer', 'attendees.user']);
+        // Obtener eventos con organizador
+        $query = Event::query()->with(['organizer.images']);
 
         // Filtrar por interés si está presente
         if (!empty($interest)) {
             $query->where('interests', 'LIKE', "%$interest%");
         }
 
-        // Ordenar por fecha, aplicar limit y offset
-        $query->orderBy('start_date', 'asc')
-        ->skip($offset)
-        ->take($limit);
+        // Ordenar por fecha
+        $query->orderBy('start_date', 'asc');
+        $query->skip($offset)->take($limit);
 
-        // Calcular proximidad y procesar asistentes
+        // Calcular proximidad y agregar asistentes
         $events = $query->get()->map(function ($event) use ($userLat, $userLng, $currentUserId) {
             $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
             $event->distance = $distance;
@@ -68,32 +67,37 @@ class EventController extends Controller
             $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
             $event->interest = $interestNames;
 
-            // Obtener asistentes y agregar campo de seguimiento
-            $event->attendees = $event->attendees->map(function ($attendee) use ($currentUserId) {
+            // Obtener asistentes del evento
+            $attendeeIds = json_decode($event->attendees) ?? [];
+            $attendees = User::whereIn('id', $attendeeIds)->get()->map(function ($user) use ($currentUserId) {
+                $isFollowed = FollowingList::where('my_user_id', $currentUserId)
+                ->where('user_id', $user->id)
+                ->exists();
+
                 return [
-                    'id' => $attendee->id,
-                    'name' => $attendee->name,
-                    'profile_image' => $attendee->images,
-                    'is_followed' => FollowingList::where('my_user_id', $currentUserId)
-                        ->where('user_id', $attendee->id)
-                        ->exists(),  // Verificar si el usuario actual sigue al asistente
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'profile_image' => $user->profile_image,
+                    'is_followed' => $isFollowed,
                 ];
             });
+
+            $event->attendees = $attendees;
 
             return $event;
         })->sortBy('distance')->values();
 
         return response()->json(['status' => true, 'data' => $events]);
     }
-    
+
     private function calculateDistance($lat1, $lng1, $lat2, $lng2)
     {
         $earthRadius = 6371; // Radio de la tierra en kilómetros
         $dLat = deg2rad($lat2 - $lat1);
         $dLng = deg2rad($lng2 - $lng1);
         $a = sin($dLat / 2) * sin($dLat / 2) +
-        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-        sin($dLng / 2) * sin($dLng / 2);
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLng / 2) * sin($dLng / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $earthRadius * $c;
     }
