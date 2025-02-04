@@ -24,6 +24,7 @@ class EventController extends Controller
     public function getEvents(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
             'user_lat' => 'required|numeric',
             'user_lng' => 'required|numeric',
             'interest' => 'nullable|string',
@@ -42,7 +43,7 @@ class EventController extends Controller
         $offset = $request->input('offset',
             0
         );
-        $currentUserId = auth()->id();  // Obtener el ID del usuario autenticado
+        $currentUserId = $request->user_lat; // Obtener el ID del usuario autenticado
 
         // Obtener eventos con organizador y asistentes
         $query = Event::with(['organizer', 'attendees.user']);
