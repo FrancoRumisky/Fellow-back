@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\Interest;
 use App\Models\Report;
+use App\Models\FollowingList;
 
 class EventController extends Controller
 {
@@ -38,32 +39,48 @@ class EventController extends Controller
         $userLng = $request->user_lng;
         $interest = $request->interest;
         $limit = $request->input('limit', 10);
-        $offset = $request->input('offset', 0);
+        $offset = $request->input('offset',
+            0
+        );
+        $currentUserId = auth()->id();  // Obtener el ID del usuario autenticado
 
-        // Obtener eventos con organizador
-        $query = Event::query()->with(['organizer.images']);
+        // Obtener eventos con organizador y asistentes
+        $query = Event::with(['organizer', 'attendees.user']);
 
         // Filtrar por interés si está presente
         if (!empty($interest)) {
             $query->where('interests', 'LIKE', "%$interest%");
         }
 
-        // Ordenar por fecha
-        $query->orderBy('start_date', 'asc');
-        $query->skip($offset)->take($limit);
+        // Ordenar por fecha, aplicar limit y offset
+        $query->orderBy('start_date', 'asc')
+        ->skip($offset)
+        ->take($limit);
 
-        // Calcular proximidad
-        $events = $query->get()->map(function ($event) use ($userLat, $userLng) {
-                $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
-                $event->distance = $distance;
+        // Calcular proximidad y procesar asistentes
+        $events = $query->get()->map(function ($event) use ($userLat, $userLng, $currentUserId) {
+            $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
+            $event->distance = $distance;
 
-                // Obtener nombres de intereses
-                $interestIds = explode(',', $event->interests);
-                $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
-                $event->interest = $interestNames;
+            // Obtener nombres de intereses
+            $interestIds = explode(',', $event->interests);
+            $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
+            $event->interest = $interestNames;
 
-                return $event;
-            })->sortBy('distance')->values();
+            // Obtener asistentes y agregar campo de seguimiento
+            $event->attendees = $event->attendees->map(function ($attendee) use ($currentUserId) {
+                return [
+                    'id' => $attendee->id,
+                    'name' => $attendee->name,
+                    'profile_image' => $attendee->images,
+                    'is_followed' => FollowingList::where('my_user_id', $currentUserId)
+                        ->where('user_id', $attendee->id)
+                        ->exists(),  // Verificar si el usuario actual sigue al asistente
+                ];
+            });
+
+            return $event;
+        })->sortBy('distance')->values();
 
         return response()->json(['status' => true, 'data' => $events]);
     }
@@ -127,6 +144,7 @@ class EventController extends Controller
         $event->available_slots = $request->capacity; // Inicialmente los espacios disponibles son iguales a la capacidad
         $event->image = $imagePath; // Asignar la ruta de la imagen si existe
         $event->interests = $request->interests; // Guardar los intereses relacionados
+        $event->attendees = json_encode([]);
 
         // Guardar el evento en la base de datos
         $event->save();
