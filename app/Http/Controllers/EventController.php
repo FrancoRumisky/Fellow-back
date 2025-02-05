@@ -47,7 +47,7 @@ class EventController extends Controller
         $currentUserId = $request->user_id; // Obtener ID del usuario actual
 
         // Obtener eventos con organizador
-        $query = Event::query()->with(['organizer.images']);
+        $query = Event::query()->with(['organizer.images', 'attendees.user.images']);
 
         // Filtrar por interés si está presente
         if (!empty($interest)) {
@@ -70,18 +70,24 @@ class EventController extends Controller
 
             // Obtener asistentes del evento
             $attendeeIds = json_decode($event->attendees) ?? [];
-            $attendees = User::whereIn('id', $attendeeIds)->get()->map(function ($user) use ($currentUserId) {
-                $isFollowed = FollowingList::where('my_user_id', $currentUserId)
+            $attendees = User::with('images') // Cargar relación de imágenes
+                ->whereIn('id', $attendeeIds)
+                ->get()
+                ->map(function ($user) use ($currentUserId) {
+                    $isFollowed = FollowingList::where('my_user_id', $currentUserId)
                     ->where('user_id', $user->id)
                     ->exists();
 
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'profile_image' => $user->images,
-                    'is_followed' => $isFollowed,
-                ];
-            });
+                    // Obtener la primera imagen disponible del usuario
+                    $profileImage = $user->images->first()?->image;
+
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'profile_image' => $profileImage,
+                        'is_followed' => $isFollowed,
+                    ];
+                });
 
             $event->attendees = $attendees;
 
