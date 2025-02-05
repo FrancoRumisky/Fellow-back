@@ -252,4 +252,44 @@ class EventController extends Controller
             ]);
         }
     }
+
+    public function joinEvent(Request $request)
+    {
+        // Validar los datos de entrada
+        $validator = Validator::make($request->all(), [
+            'event_id' => 'required|integer|exists:events,id',
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
+
+        // Manejar errores de validación
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
+        }
+
+        // Obtener el evento
+        $event = Event::find($request->event_id);
+
+        // Verificar si el evento tiene capacidad disponible
+        if ($event->available_slots <= 0) {
+            return response()->json(['status' => false, 'message' => 'No hay espacios disponibles en este evento.']);
+        }
+
+        // Decodificar los asistentes actuales
+        $attendees = json_decode($event->attendees, true) ?? [];
+
+        // Verificar si el usuario ya está registrado como asistente
+        if (in_array($request->user_id, $attendees)) {
+            return response()->json(['status' => false, 'message' => 'Ya estás registrado en este evento.']);
+        }
+
+        // Agregar el `user_id` a la lista de asistentes
+        $attendees[] = $request->user_id;
+
+        // Actualizar los datos del evento
+        $event->attendees = json_encode($attendees);
+        $event->available_slots -= 1; // Reducir el número de espacios disponibles
+        $event->save();
+
+        return response()->json(['status' => true, 'message' => 'Te has unido al evento con éxito.']);
+    }
 }
