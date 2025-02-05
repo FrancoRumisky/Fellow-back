@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Interest;
 use App\Models\Report;
 use App\Models\FollowingList;
+use App\Models\Images;
 
 class EventController extends Controller
 {
@@ -16,6 +17,13 @@ class EventController extends Controller
     public function organizer()
     {
         return $this->belongsTo(User::class, 'organizer_id', 'id'); // Ajusta el modelo y campos según tu base de datos
+    }
+
+    public function attendees()
+    {
+        // Simular la relación obteniendo los asistentes desde el campo JSON
+        return $this->hasManyThrough(User::class, Images::class, 'user_id', 'id', 'attendees', 'user_id')
+        ->with('images');
     }
 
 
@@ -70,21 +78,18 @@ class EventController extends Controller
 
             // Obtener asistentes del evento
             $attendeeIds = json_decode($event->attendees) ?? [];
-            $attendees = User::with('images')  // Relación de imágenes
-                ->whereIn('id', $attendeeIds)
-                ->get()
-                ->map(function ($user) use ($currentUserId) {
-                    $isFollowed = FollowingList::where('my_user_id', $currentUserId)
+            $attendees = User::whereIn('id', $attendeeIds)->with('images')->get()->map(function ($user) use ($currentUserId) {
+                $isFollowed = FollowingList::where('my_user_id', $currentUserId)
                     ->where('user_id', $user->id)
                     ->exists();
 
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'profile_image' => $user->images->first()?->image,
-                        'is_followed' => $isFollowed,
-                    ];
-                });
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'profile_image' => $user->images->first()->image ?? null,
+                    'is_followed' => $isFollowed,
+                ];
+            });
 
             $event->attendees = $attendees;
             return $event;
