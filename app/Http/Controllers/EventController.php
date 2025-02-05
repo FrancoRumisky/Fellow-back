@@ -153,7 +153,9 @@ class EventController extends Controller
         $event->available_slots = $request->capacity; // Inicialmente los espacios disponibles son iguales a la capacidad
         $event->image = $imagePath; // Asignar la ruta de la imagen si existe
         $event->interests = $request->interests; // Guardar los intereses relacionados
-        $event->attendees = json_encode([]);
+
+        // Agregar el organizador a la lista de asistentes
+        $event->attendees = json_encode([$request->organizer_id]);
 
         // Guardar el evento en la base de datos
         $event->save();
