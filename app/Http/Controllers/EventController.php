@@ -47,7 +47,7 @@ class EventController extends Controller
         $currentUserId = $request->user_id; // Obtener ID del usuario actual
 
         // Obtener eventos con organizador
-        $query = Event::query()->with(['organizer.images', 'attendees.user.images']);
+        $query = Event::query()->with(['organizer.images']);
 
         // Filtrar por interés si está presente
         if (!empty($interest)) {
@@ -70,7 +70,7 @@ class EventController extends Controller
 
             // Obtener asistentes del evento
             $attendeeIds = json_decode($event->attendees) ?? [];
-            $attendees = User::with('images') // Cargar relación de imágenes
+            $attendees = User::with('images')  // Relación de imágenes
                 ->whereIn('id', $attendeeIds)
                 ->get()
                 ->map(function ($user) use ($currentUserId) {
@@ -78,19 +78,15 @@ class EventController extends Controller
                     ->where('user_id', $user->id)
                     ->exists();
 
-                    // Obtener la primera imagen disponible del usuario
-                    $profileImage = $user->images->first()?->image;
-
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
-                        'profile_image' => $profileImage,
+                        'profile_image' => $user->images->first()?->image,
                         'is_followed' => $isFollowed,
                     ];
                 });
 
             $event->attendees = $attendees;
-
             return $event;
         })->sortBy('distance')->values();
 
