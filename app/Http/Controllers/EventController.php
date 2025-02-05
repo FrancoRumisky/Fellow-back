@@ -19,13 +19,6 @@ class EventController extends Controller
         return $this->belongsTo(User::class, 'organizer_id', 'id'); // Ajusta el modelo y campos según tu base de datos
     }
 
-    public function attendees()
-    {
-        // Simular la relación obteniendo los asistentes desde el campo JSON
-        return $this->hasManyThrough(User::class, Images::class, 'user_id', 'id', 'attendees', 'user_id')
-        ->with('images');
-    }
-
 
 
     // Obtener lista de eventos
@@ -78,20 +71,23 @@ class EventController extends Controller
 
             // Obtener asistentes del evento
             $attendeeIds = json_decode($event->attendees) ?? [];
-            $attendees = User::whereIn('id', $attendeeIds)->with('images')->get()->map(function ($user) use ($currentUserId) {
+            $attendees = User::whereIn('id', $attendeeIds)->get()->map(function ($user) use ($currentUserId) {
                 $isFollowed = FollowingList::where('my_user_id', $currentUserId)
                     ->where('user_id', $user->id)
                     ->exists();
 
+                $profileImage = Images::where('user_id', $user->id)->value('image');
+
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'profile_image' => $user->images->first()->image ?? null,
+                    'profile_image' => $profileImage,
                     'is_followed' => $isFollowed,
                 ];
             });
 
             $event->attendees = $attendees;
+
             return $event;
         })->sortBy('distance')->values();
 
