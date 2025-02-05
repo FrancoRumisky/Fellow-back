@@ -78,7 +78,7 @@ class EventController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'profile_image' => $user->profile_image,
+                    'profile_image' => $user->images,
                     'is_followed' => $isFollowed,
                 ];
             });
