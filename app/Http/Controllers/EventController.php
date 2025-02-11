@@ -154,8 +154,9 @@ class EventController extends Controller
         $event->image = $imagePath; // Asignar la ruta de la imagen si existe
         $event->interests = $request->interests; // Guardar los intereses relacionados
 
-        // Agregar el organizador a la lista de asistentes
-        $event->attendees = json_encode([$request->organizer_id]);
+
+        // Asignar al organizador como asistente en la tabla intermedia
+        $event->attendees()->attach($request->organizer_id, ['is_organizer' => true]);
 
         // Guardar el evento en la base de datos
         $event->save();

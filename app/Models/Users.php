@@ -32,6 +32,11 @@ class Users extends Model
         return $this->hasOne(LiveApplications::class, 'user_id', 'id');
     }
 
+    public function events()
+    {
+        return $this->belongsToMany(Event::class, 'event_attendees')
+        ->withTimestamps();
+    }
 
     
     function verifyRequest()
