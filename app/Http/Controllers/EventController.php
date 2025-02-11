@@ -160,6 +160,7 @@ class EventController extends Controller
 
         // Asignar al organizador como asistente en la tabla intermedia después de guardar
         $event->attendees()->attach($request->organizer_id);
+        $event->available_slots -= 1; // Reducir el número de espacios disponibles
 
         return response()->json(['status' => true, 'message' => 'Evento creado exitosamente', 'data' => $event]);
     }
@@ -284,16 +285,32 @@ class EventController extends Controller
         return response()->json(['status' => true, 'message' => 'Te has unido al evento con éxito.']);
     }
 
-    public function getEventAttendees($eventId)
+    public function getEventAttendees(Request $request)
     {
+        // Validar los datos recibidos
+        $validator = Validator::make($request->all(), [
+            'event_id' => 'required|integer|exists:events,id',
+            'user_id' => 'required|integer|exists:users,id', // Validar que se envíe el user_id
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
+        }
+
+        // Obtener los parámetros
+        $eventId = $request->input('event_id');
+        $userId = $request->input('user_id');
+
+        // Buscar el evento
         $event = Event::find($eventId);
 
         if (!$event) {
             return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
         }
 
-        $attendees = $event->attendees()->with('images')->get()->map(function ($user) {
-            $isFollowed = FollowingList::where('my_user_id', auth()->id())
+        // Obtener los asistentes y verificar si el usuario los sigue
+        $attendees = $event->attendees()->with('images')->get()->map(function ($user) use ($userId) {
+            $isFollowed = FollowingList::where('my_user_id', $userId)
                 ->where('user_id', $user->id)
                 ->exists();
 
@@ -305,9 +322,10 @@ class EventController extends Controller
             ];
         });
 
+        // Devolver la respuesta en formato JSON
         return response()->json(['status' => true, 'data' => $attendees]);
     }
-
+    
     public function leaveEvent(Request $request)
     {
         $validator = Validator::make($request->all(), [
