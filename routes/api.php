@@ -126,3 +126,5 @@ Route::post('deleteEvent', [EventController::class, 'deleteEvent'])->middleware(
 Route::post('getEventDetails', [EventController::class, 'getEventDetails'])->middleware('checkHeader');
 Route::post('reportEvent', [EventController::class, 'reportEvent'])->middleware('checkHeader');
 Route::post('joinEvent', [EventController::class, 'joinEvent'])->middleware('checkHeader');
+Route::post('getEventAttendees', [EventController::class, 'getEventAttendees'])->middleware('checkHeader');
+Route::post('leaveEvent', [EventController::class, 'leaveEvent'])->middleware('checkHeader');
