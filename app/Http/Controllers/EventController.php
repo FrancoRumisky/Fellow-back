@@ -155,11 +155,11 @@ class EventController extends Controller
         $event->interests = $request->interests; // Guardar los intereses relacionados
 
 
-        // Asignar al organizador como asistente en la tabla intermedia
-        $event->attendees()->attach($request->organizer_id, ['is_organizer' => true]);
-
         // Guardar el evento en la base de datos
         $event->save();
+
+        // Asignar al organizador como asistente en la tabla intermedia después de guardar
+        $event->attendees()->attach($request->organizer_id, ['is_organizer' => true]);
 
         return response()->json(['status' => true, 'message' => 'Evento creado exitosamente', 'data' => $event]);
     }
