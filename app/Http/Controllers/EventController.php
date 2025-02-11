@@ -266,19 +266,17 @@ class EventController extends Controller
             return response()->json(['status' => false, 'message' => 'No hay espacios disponibles en este evento.']);
         }
 
-        // Decodificar los asistentes actuales
-        $attendees = json_decode($event->attendees, true) ?? [];
+        // Verificar si el usuario ya está registrado como asistente en la tabla intermedia
+        $alreadyJoined = $event->attendees()->where('user_id', $request->user_id)->exists();
 
-        // Verificar si el usuario ya está registrado como asistente
-        if (in_array($request->user_id, $attendees)) {
+        if ($alreadyJoined) {
             return response()->json(['status' => false, 'message' => 'Ya estás registrado en este evento.']);
         }
 
-        // Agregar el `user_id` a la lista de asistentes
-        $attendees[] = $request->user_id;
-
+        // Registrar al usuario en el evento en la tabla intermedia
+        $event->attendees()->attach($request->user_id);
         // Actualizar los datos del evento
-        $event->attendees = json_encode($attendees);
+
         $event->available_slots -= 1; // Reducir el número de espacios disponibles
         $event->save();
 
@@ -325,7 +323,7 @@ class EventController extends Controller
         // Devolver la respuesta en formato JSON
         return response()->json(['status' => true, 'data' => $attendees]);
     }
-    
+
     public function leaveEvent(Request $request)
     {
         $validator = Validator::make($request->all(), [
