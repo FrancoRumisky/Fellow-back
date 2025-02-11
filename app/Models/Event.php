@@ -23,7 +23,7 @@ class Event extends Model
     // Relación con los asistentes
     public function attendees()
     {
-        return $this->belongsToMany(User::class, 'event_attendees', 'event_id', 'user_id');
+        return $this->belongsToMany(Users::class, 'event_attendees', 'event_id', 'user_id');
     }
 
     // Relación con reseñas o calificaciones
