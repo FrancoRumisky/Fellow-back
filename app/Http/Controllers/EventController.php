@@ -69,22 +69,20 @@ class EventController extends Controller
             $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
             $event->interest = $interestNames;
 
-            // Obtener asistentes del evento
-            $attendeeIds = json_decode($event->attendees) ?? [];
-            $attendees = User::whereIn('id', $attendeeIds)->get()->map(function ($user) use ($currentUserId) {
-                $isFollowed = FollowingList::where('my_user_id', $currentUserId)
+            // Obtener asistentes del evento desde la tabla intermedia
+            $attendees = $event->attendees()->with('images')->get()->map(function ($user) use ($currentUserId) {
+                    // Verificar si el usuario está siendo seguido por el usuario actual
+                    $isFollowed = FollowingList::where('my_user_id', $currentUserId)
                     ->where('user_id', $user->id)
                     ->exists();
 
-                $profileImage = Images::where('user_id', $user->id)->value('image');
-
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'profile_image' => $profileImage,
-                    'is_followed' => $isFollowed,
-                ];
-            });
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'profile_image' => $user->images->first()->image ?? '',
+                        'is_followed' => $isFollowed,
+                    ];
+                });
 
             $event->attendees = $attendees;
 
