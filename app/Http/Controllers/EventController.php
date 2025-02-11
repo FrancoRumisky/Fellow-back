@@ -203,21 +203,6 @@ class EventController extends Controller
         return response()->json(['status' => true, 'message' => 'Event deleted successfully']);
     }
 
-    // Obtener detalles de un evento
-    public function getEventDetails(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'event_id' => 'required|exists:events,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
-        }
-
-        $event = Event::find($request->event_id);
-
-        return response()->json(['status' => true, 'data' => $event]);
-    }
 
     //Reportar un evento
     public function reportEvent(Request $request)
@@ -297,5 +282,63 @@ class EventController extends Controller
         $event->save();
 
         return response()->json(['status' => true, 'message' => 'Te has unido al evento con éxito.']);
+    }
+
+    public function getEventAttendees($eventId)
+    {
+        $event = Event::find($eventId);
+
+        if (!$event) {
+            return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
+        }
+
+        $attendees = $event->attendees()->with('images')->get()->map(function ($user) {
+            $isFollowed = FollowingList::where('my_user_id', auth()->id())
+                ->where('user_id', $user->id)
+                ->exists();
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'profile_image' => $user->images->first()->image ?? '',
+                'is_followed' => $isFollowed,
+            ];
+        });
+
+        return response()->json(['status' => true, 'data' => $attendees]);
+    }
+
+    public function leaveEvent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'event_id' => 'required|exists:events,id',
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
+        }
+
+        $event = Event::find($request->event_id);
+        $userId = $request->user_id;
+
+        // Verificar si el usuario está registrado como asistente del evento
+        $isAttendee = $event->attendees()->where('user_id', $userId)->exists();
+
+        if (!$isAttendee) {
+            return response()->json([
+                'status' => false,
+                'message' => 'El usuario no está registrado como asistente de este evento',
+            ]);
+        }
+
+        // Eliminar al usuario de los asistentes del evento
+        $event->attendees()->detach($userId);
+
+        // Actualizar espacios disponibles
+        $event->available_slots += 1;
+        $event->save();
+
+        return response()->json(['status' => true, 'message' => 'Has salido del evento con éxito']);
     }
 }
