@@ -34,11 +34,9 @@ class Users extends Model
 
     public function events()
     {
-        return $this->belongsToMany(Event::class, 'event_attendees')
-        ->withTimestamps();
+        return $this->belongsToMany(Event::class, 'user_events', 'user_id', 'event_id');
     }
 
-    
     function verifyRequest()
     {
         return $this->hasOne(VerifyRequest::class, 'user_id', 'id');

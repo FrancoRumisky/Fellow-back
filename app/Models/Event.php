@@ -21,16 +21,14 @@ class Event extends Model
     }
 
     // Relación con los asistentes
-   public function attendees()
-{
-    return $this->belongsToMany(User::class, 'event_attendees')
-                ->withTimestamps();
-}
+    public function attendees()
+    {
+        return $this->belongsToMany(User::class, 'event_attendees', 'event_id', 'user_id');
+    }
 
     // Relación con reseñas o calificaciones
     public function reviews()
     {
         return $this->hasMany(EventReview::class, 'event_id', 'id');
     }
-
 }
