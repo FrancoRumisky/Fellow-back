@@ -159,7 +159,7 @@ class EventController extends Controller
         $event->save();
 
         // Asignar al organizador como asistente en la tabla intermedia después de guardar
-        $event->attendees()->attach($request->organizer_id, ['is_organizer' => true]);
+        $event->attendees()->attach($request->organizer_id);
 
         return response()->json(['status' => true, 'message' => 'Evento creado exitosamente', 'data' => $event]);
     }
