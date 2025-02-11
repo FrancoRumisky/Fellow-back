@@ -67,23 +67,19 @@ class EventController extends Controller
             $event->interest = $interestNames;
 
             // Obtener asistentes desde la tabla intermedia
-            $attendees = $event->attendees->map(function ($user) use ($currentUserId) {
+            $event->attendees = $event->attendees->map(function ($user) use ($currentUserId) {
                 $isFollowed = FollowingList::where('my_user_id', $currentUserId)
                     ->where('user_id', $user->id)
                     ->exists();
 
-                $profileImage = Images::where('user_id', $user->id)->value('image');
-
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'profile_image' => $profileImage,
+                    'profile_image' => $user->images->first()->image ?? '',
                     'is_followed' => $isFollowed,
                 ];
             });
-
-            $event->attendees = $attendees;
-
+            
             return $event;
         })->sortBy('distance')->values();
 
