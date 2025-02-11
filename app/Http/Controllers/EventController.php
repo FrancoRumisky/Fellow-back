@@ -41,14 +41,11 @@ class EventController extends Controller
         $userLng = $request->user_lng;
         $interest = $request->interest;
         $limit = $request->input('limit', 10);
-        $offset = $request->input(
-            'offset',
-            0
-        );
-        $currentUserId = $request->user_id; // Obtener ID del usuario actual
+        $offset = $request->input('offset', 0);
+        $currentUserId = $request->user_id;
 
-        // Obtener eventos con organizador
-        $query = Event::query()->with(['organizer.images']);
+        // Obtener eventos con organizador y asistentes
+        $query = Event::query()->with(['organizer.images', 'attendees']);
 
         // Filtrar por interés si está presente
         if (!empty($interest)) {
@@ -59,7 +56,7 @@ class EventController extends Controller
         $query->orderBy('start_date', 'asc');
         $query->skip($offset)->take($limit);
 
-        // Calcular proximidad y agregar asistentes
+        // Procesar los eventos
         $events = $query->get()->map(function ($event) use ($userLat, $userLng, $currentUserId) {
             $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
             $event->distance = $distance;
@@ -69,20 +66,21 @@ class EventController extends Controller
             $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
             $event->interest = $interestNames;
 
-            // Obtener asistentes del evento desde la tabla intermedia
-            $attendees = $event->attendees()->with('images')->get()->map(function ($user) use ($currentUserId) {
-                    // Verificar si el usuario está siendo seguido por el usuario actual
-                    $isFollowed = FollowingList::where('my_user_id', $currentUserId)
+            // Obtener asistentes desde la tabla intermedia
+            $attendees = $event->attendees->map(function ($user) use ($currentUserId) {
+                $isFollowed = FollowingList::where('my_user_id', $currentUserId)
                     ->where('user_id', $user->id)
                     ->exists();
 
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'profile_image' => $user->images->first()->image ?? '',
-                        'is_followed' => $isFollowed,
-                    ];
-                });
+                $profileImage = Images::where('user_id', $user->id)->value('image');
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'profile_image' => $profileImage,
+                    'is_followed' => $isFollowed,
+                ];
+            });
 
             $event->attendees = $attendees;
 
