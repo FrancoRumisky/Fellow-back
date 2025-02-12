@@ -72,14 +72,16 @@ class EventController extends Controller
                     ->where('user_id', $user->id)
                     ->exists();
 
+                // Obtener la imagen manualmente desde la tabla 'images'
+                $profileImage = Images::where('user_id', $user->id)->value('image');
+
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'profile_image' => $user->images->first()->image ?? '',  // Obtener la primera imagen del usuario
+                    'profile_image' => $profileImage ?? '', // Si no tiene imagen, devolver una cadena vacía
                     'is_followed' => $isFollowed,
                 ];
             });
-
             return $event;
         })->sortBy('distance')->values();
 
@@ -291,23 +293,26 @@ class EventController extends Controller
         $eventId = $request->input('event_id');
         $userId = $request->input('user_id');
 
-        // Buscar el evento con sus asistentes
-        $event = Event::with('attendees.images')->find($eventId);
+        // Buscar el evento
+        $event = Event::find($eventId);
 
         if (!$event) {
             return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
         }
 
-        // Obtener asistentes con imágenes y estado de seguimiento
-        $attendees = $event->attendees->map(function ($user) use ($userId) {
+        // Obtener asistentes del evento desde la tabla intermedia event_attendees
+        $attendees = $event->attendees()->get()->map(function ($user) use ($userId) {
             $isFollowed = FollowingList::where('my_user_id', $userId)
                 ->where('user_id', $user->id)
                 ->exists();
 
+            // Obtener la imagen desde la tabla images manualmente
+            $profileImage = Images::where('user_id', $user->id)->value('image');
+
             return [
                 'id' => $user->id,
                 'name' => $user->name,
-                'profile_image' => optional($user->images->first())->image ?? '',
+                'profile_image' => $profileImage ?? '',
                 'is_followed' => $isFollowed,
             ];
         });
