@@ -66,7 +66,7 @@ class EventController extends Controller
             $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
             $event->interest = $interestNames;
 
-            // Obtener asistentes desde la tabla intermedia
+            // Obtener asistentes desde la tabla intermedia y sus imágenes
             $event->attendees = $event->attendees->map(function ($user) use ($currentUserId) {
                 $isFollowed = FollowingList::where('my_user_id', $currentUserId)
                     ->where('user_id', $user->id)
