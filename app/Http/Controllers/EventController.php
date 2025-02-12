@@ -75,11 +75,11 @@ class EventController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'profile_image' => $user->images->first()->image ?? '',
+                    'profile_image' => $user->images->first()->image ?? '',  // Obtener la primera imagen del usuario
                     'is_followed' => $isFollowed,
                 ];
             });
-            
+
             return $event;
         })->sortBy('distance')->values();
 
@@ -291,15 +291,15 @@ class EventController extends Controller
         $eventId = $request->input('event_id');
         $userId = $request->input('user_id');
 
-        // Buscar el evento
-        $event = Event::find($eventId);
+        // Buscar el evento con sus asistentes
+        $event = Event::with('attendees.images')->find($eventId);
 
         if (!$event) {
             return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
         }
 
-        // Obtener los asistentes y verificar si el usuario los sigue
-        $attendees = $event->attendees()->with('images')->get()->map(function ($user) use ($userId) {
+        // Obtener asistentes con imágenes y estado de seguimiento
+        $attendees = $event->attendees->map(function ($user) use ($userId) {
             $isFollowed = FollowingList::where('my_user_id', $userId)
                 ->where('user_id', $user->id)
                 ->exists();
@@ -307,12 +307,11 @@ class EventController extends Controller
             return [
                 'id' => $user->id,
                 'name' => $user->name,
-                'profile_image' => $user->images->first()->image ?? '',
+                'profile_image' => optional($user->images->first())->image ?? '',
                 'is_followed' => $isFollowed,
             ];
         });
 
-        // Devolver la respuesta en formato JSON
         return response()->json(['status' => true, 'data' => $attendees]);
     }
 
