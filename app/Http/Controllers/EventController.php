@@ -293,26 +293,23 @@ class EventController extends Controller
         $eventId = $request->input('event_id');
         $userId = $request->input('user_id');
 
-        // Buscar el evento
-        $event = Event::find($eventId);
+        // Buscar el evento y cargar asistentes con sus imágenes
+        $event = Event::with('attendees.images')->find($eventId);
 
         if (!$event) {
             return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
         }
 
-        // Obtener asistentes del evento desde la tabla intermedia event_attendees
-        $attendees = $event->attendees()->get()->map(function ($user) use ($userId) {
+        // Obtener asistentes desde la relación con `images`
+        $attendees = $event->attendees->map(function ($user) use ($userId) {
             $isFollowed = FollowingList::where('my_user_id', $userId)
                 ->where('user_id', $user->id)
                 ->exists();
 
-            // Obtener la imagen desde la tabla images manualmente
-            $profileImage = Images::where('user_id', $user->id)->value('image');
-
             return [
                 'id' => $user->id,
                 'name' => $user->name,
-                'profile_image' => $profileImage ?? '',
+                'profile_image' => $user->images->first()->image ?? '', // Obtener la primera imagen del usuario
                 'is_followed' => $isFollowed,
             ];
         });
