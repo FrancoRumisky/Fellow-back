@@ -45,7 +45,7 @@ class EventController extends Controller
         $currentUserId = $request->user_id;
 
         // Obtener eventos con organizador y asistentes
-        $query = Event::query()->with(['organizer.images', 'attendees']);
+        $query = Event::query()->with(['organizer.images', 'attendees.images']);
 
         // Filtrar por interés si está presente
         if (!empty($interest)) {
@@ -69,8 +69,8 @@ class EventController extends Controller
             // Obtener asistentes con imágenes
             $event->attendees = $event->attendees->map(function ($user) use ($currentUserId) {
                 $isFollowed = FollowingList::where('my_user_id', $currentUserId)
-                ->where('user_id', $user->id)
-                ->exists();
+                    ->where('user_id', $user->id)
+                    ->exists();
 
                 // Obtener la imagen del usuario desde la tabla `images`
                 $profileImage = Images::where('user_id', $user->id)->value('image');
