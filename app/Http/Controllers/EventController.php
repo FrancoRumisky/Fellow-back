@@ -66,19 +66,19 @@ class EventController extends Controller
             $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
             $event->interest = $interestNames;
 
-            // Obtener asistentes desde la tabla intermedia y sus imágenes
+            // Obtener asistentes con imágenes
             $event->attendees = $event->attendees->map(function ($user) use ($currentUserId) {
                 $isFollowed = FollowingList::where('my_user_id', $currentUserId)
-                    ->where('user_id', $user->id)
-                    ->exists();
+                ->where('user_id', $user->id)
+                ->exists();
 
-                // Obtener la imagen manualmente desde la tabla 'images'
+                // Obtener la imagen del usuario desde la tabla `images`
                 $profileImage = Images::where('user_id', $user->id)->value('image');
 
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'profile_image' => $profileImage ?? '', // Si no tiene imagen, devolver una cadena vacía
+                    'profile_image' => $profileImage ?? '',  // Si no hay imagen, devuelve una cadena vacía
                     'is_followed' => $isFollowed,
                 ];
             });
