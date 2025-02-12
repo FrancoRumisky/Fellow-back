@@ -106,6 +106,7 @@ class EventController extends Controller
         // Validar los datos de entrada
         $validator = Validator::make($request->all(), [
             'title' => 'required|string',
+            'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'start_time' => 'required',
@@ -134,6 +135,7 @@ class EventController extends Controller
         // Crear el evento
         $event = new Event();
         $event->title = $request->title;
+        $event->description = $request->description;
         $event->start_date = $request->start_date;
         $event->end_date = $request->end_date;
         $event->start_time = $request->start_time;
