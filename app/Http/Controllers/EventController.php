@@ -343,26 +343,25 @@ class EventController extends Controller
 
     public function markExpiredEvents()
     {
-        $now = now(); // Hora actual del servidor en UTC
-
-        Log::info("Hora actual del servidor (UTC): {$now}");
+        $nowEpoch = now()->timestamp; // Obtener la hora actual del servidor en Epoch
 
         // Obtener eventos activos
         $events = Event::where('status', 'active')->get();
 
         foreach ($events as $event) {
-            $eventLocalDateTime = "{$event->end_date} {$event->end_time}";
+            // Concatenar fecha y hora tal como están en la BD
+            $eventEndDateTime = "{$event->end_date} {$event->end_time}";
 
-            Log::info("Evento ID: {$event->id} | Fecha y hora almacenada (local): {$eventLocalDateTime}");
+            // Convertir a Epoch (timestamp Unix)
+            $eventEndEpoch = Carbon::createFromFormat('Y-m-d H:i:s', $eventEndDateTime)
+                ->timestamp;
 
-            // Convertir fecha y hora del usuario a UTC
-            $eventEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $eventLocalDateTime, config('app.timezone'))
-                ->setTimezone('UTC');
+            // Registrar en logs para depuración
+            Log::info("Evento ID: {$event->id} | Fecha almacenada: $eventEndDateTime | Epoch: $eventEndEpoch");
+            Log::info("Hora actual del servidor (Epoch): $nowEpoch");
 
-            Log::info("Evento ID: {$event->id} | Fecha de fin convertida a UTC: {$eventEndDateTime}");
-
-            // Si la fecha y hora ya pasó en UTC, marcar el evento como completado
-            if ($eventEndDateTime->lessThanOrEqualTo($now)) {
+            // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
+            if ($eventEndEpoch <= $nowEpoch) {
                 $event->status = 'completed';
                 $event->save();
                 Log::info("✅ Evento ID: {$event->id} marcado como COMPLETADO.");
