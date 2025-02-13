@@ -137,10 +137,10 @@ class EventController extends Controller
         $event = new Event();
         $event->title = $request->title;
         $event->description = $request->description;
-        $event->start_date = $request->start_date;
-        $event->end_date = $request->end_date;
-        $event->start_time = $request->start_time;
-        $event->end_time = $request->end_time;
+        $event->start_date = Carbon::parse("{$request->start_date} {$request->start_time}")->setTimezone('UTC')->toDateString();
+        $event->end_date = Carbon::parse("{$request->end_date} {$request->end_time}")->setTimezone('UTC')->toDateString();
+        $event->start_time = Carbon::parse("{$request->start_date} {$request->start_time}")->setTimezone('UTC')->toTimeString();
+        $event->end_time = Carbon::parse("{$request->end_date} {$request->end_time}")->setTimezone('UTC')->toTimeString();
         $event->location = $request->location;
         $event->latitude = $request->latitude;
         $event->longitude = $request->longitude;
