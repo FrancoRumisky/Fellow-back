@@ -112,7 +112,6 @@ class EventController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'start_time' => 'required',
             'end_time' => 'required',
-            'timezone' => 'required|string',
             'location' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
@@ -142,7 +141,6 @@ class EventController extends Controller
         $event->end_date = $request->end_date;
         $event->start_time = $request->start_time;
         $event->end_time = $request->end_time;
-        $event->timezone = $request->timezone;
         $event->location = $request->location;
         $event->latitude = $request->latitude;
         $event->longitude = $request->longitude;
@@ -354,7 +352,7 @@ class EventController extends Controller
             $eventEndDateTime = Carbon::createFromFormat(
                 'Y-m-d H:i:s',
                 "{$event->end_date} {$event->end_time}",
-                $event->timezone // Se usa la zona horaria del evento
+                'UTC'
             )->setTimezone(config('app.timezone')); // Convertir a la zona horaria del servidor
 
             // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
