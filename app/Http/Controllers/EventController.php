@@ -343,28 +343,28 @@ class EventController extends Controller
 
     public function markExpiredEvents()
     {
-        $now = now(); // Hora actual del servidor
-        Log::info("Hora actual del servidor: " . $now->toDateTimeString());
+        $now = now(); // Hora actual del servidor en UTC (según la configuración)
+
+        Log::info("Hora actual del servidor: {$now}");
 
         // Obtener eventos activos
         $events = Event::where('status', 'active')->get();
 
         foreach ($events as $event) {
-            // Crear la fecha completa combinando `end_date` y `end_time`
+            // Convertir la fecha y hora del evento a UTC
             $eventEndDateTime = Carbon::createFromFormat(
                 'Y-m-d H:i:s',
                 "{$event->end_date} {$event->end_time}",
-                config('app.timezone') // Usar la zona horaria del servidor
-            );
+                config('app.timezone') // Asume que la zona horaria del servidor está en config('app.timezone')
+            )->timezone('UTC'); // Convertir a UTC
 
-            // Imprimir la fecha y hora convertida
-            Log::info("Evento ID: {$event->id} | Fecha de fin convertida: " . $eventEndDateTime->toDateTimeString());
+            Log::info("Evento ID: {$event->id} | Fecha de fin convertida a UTC: {$eventEndDateTime}");
 
             // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
             if ($eventEndDateTime->lessThanOrEqualTo($now)) {
-                Log::info("Evento ID: {$event->id} marcado como COMPLETADO.");
                 $event->status = 'completed';
                 $event->save();
+                Log::info("Evento ID: {$event->id} marcado como completado.");
             } else {
                 Log::info("Evento ID: {$event->id} aún está activo.");
             }
