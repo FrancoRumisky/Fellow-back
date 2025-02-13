@@ -356,8 +356,8 @@ class EventController extends Controller
             Log::info("Evento ID: {$event->id} | Fecha y hora almacenada (local): {$eventLocalDateTime}");
 
             // Convertir fecha y hora del usuario a UTC
-            $eventEndDateTime = Carbon::createFromFormat('Y-m-d H:i', $eventLocalDateTime, config('app.timezone'))
-            ->setTimezone('UTC');
+            $eventEndDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $eventLocalDateTime, config('app.timezone'))
+                ->setTimezone('UTC');
 
             Log::info("Evento ID: {$event->id} | Fecha de fin convertida a UTC: {$eventEndDateTime}");
 
