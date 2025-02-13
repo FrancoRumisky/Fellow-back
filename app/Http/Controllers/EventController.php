@@ -133,9 +133,25 @@ class EventController extends Controller
             $imagePath = $request->file('image')->store('events', 'public'); // Guardar imagen en almacenamiento público
         }
 
+        \Illuminate\Support\Facades\Log::info('Datos recibidos:', [
+            'start_date' => $request->start_date,
+            'start_time' => $request->start_time,
+            'end_date' => $request->end_date,
+            'end_time' => $request->end_time,
+        ]);
+
+    
+
         $startDateTime = Carbon::parse("{$request->start_date} {$request->start_time}")->setTimezone('UTC');
         $endDateTime = Carbon::parse("{$request->end_date} {$request->end_time}")->setTimezone('UTC');
-        
+
+        \Illuminate\Support\Facades\Log::info('Fechas convertidas:', [
+            'start_date' => $startDateTime->toDateString(),
+            'start_time' => $startDateTime->toTimeString(),
+            'end_date' => $endDateTime->toDateString(),
+            'end_time' => $endDateTime->toTimeString(),
+        ]);
+
         // Crear el evento
         $event = new Event();
         $event->title = $request->title;
