@@ -133,14 +133,20 @@ class EventController extends Controller
             $imagePath = $request->file('image')->store('events', 'public'); // Guardar imagen en almacenamiento público
         }
 
+        $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', "{$request->start_date} {$request->start_time}")
+        ->timezone('UTC');
+
+        $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', "{$request->end_date} {$request->end_time}")
+        ->timezone('UTC');
+
         // Crear el evento
         $event = new Event();
         $event->title = $request->title;
         $event->description = $request->description;
-        $event->start_date = Carbon::parse("{$request->start_date} {$request->start_time}")->setTimezone('UTC')->toDateString();
-        $event->end_date = Carbon::parse("{$request->end_date} {$request->end_time}")->setTimezone('UTC')->toDateString();
-        $event->start_time = Carbon::parse("{$request->start_date} {$request->start_time}")->setTimezone('UTC')->toTimeString();
-        $event->end_time = Carbon::parse("{$request->end_date} {$request->end_time}")->setTimezone('UTC')->toTimeString();
+        $event->start_date = $startDateTime->toDateString();
+        $event->end_date = $endDateTime->toDateString();
+        $event->start_time = $startDateTime->toTimeString();
+        $event->end_time = $endDateTime->toTimeString();
         $event->location = $request->location;
         $event->latitude = $request->latitude;
         $event->longitude = $request->longitude;
