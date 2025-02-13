@@ -10,6 +10,7 @@ use App\Models\Interest;
 use App\Models\Report;
 use App\Models\FollowingList;
 use App\Models\Images;
+use Carbon\Carbon;
 
 class EventController extends Controller
 {
@@ -111,6 +112,7 @@ class EventController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'start_time' => 'required',
             'end_time' => 'required',
+            'timezone' => 'required|string',
             'location' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
@@ -140,6 +142,7 @@ class EventController extends Controller
         $event->end_date = $request->end_date;
         $event->start_time = $request->start_time;
         $event->end_time = $request->end_time;
+        $event->timezone = $request->timezone;
         $event->location = $request->location;
         $event->latitude = $request->latitude;
         $event->longitude = $request->longitude;
@@ -337,5 +340,30 @@ class EventController extends Controller
         $event->save();
 
         return response()->json(['status' => true, 'message' => 'Has salido del evento con éxito']);
+    }
+
+    public function markExpiredEvents()
+    {
+        $now = now(); // Hora actual del servidor
+
+        // Obtener eventos activos
+        $events = Event::where('status', 'active')->get();
+
+        foreach ($events as $event) {
+            // Convertir la fecha y hora del evento a la zona horaria del servidor
+            $eventEndDateTime = Carbon::createFromFormat(
+                'Y-m-d H:i:s',
+                "{$event->end_date} {$event->end_time}",
+                $event->timezone // Se usa la zona horaria del evento
+            )->setTimezone(config('app.timezone')); // Convertir a la zona horaria del servidor
+
+            // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
+            if ($eventEndDateTime->lessThanOrEqualTo($now)) {
+                $event->status = 'expired';
+                $event->save();
+            }
+        }
+
+        return response()->json(['status' => true, 'message' => 'Eventos expirados actualizados']);
     }
 }
