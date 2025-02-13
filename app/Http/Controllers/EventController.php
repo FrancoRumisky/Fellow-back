@@ -46,7 +46,7 @@ class EventController extends Controller
         $currentUserId = $request->user_id;
 
         // Obtener eventos con organizador y asistentes
-        $query = Event::query()->with(['organizer.images', 'attendees.images']);
+        $query = Event::query()->with(['organizer.images', 'attendees.images'])->where('status', '!=', 'completed');
 
         // Filtrar por interés si está presente
         if (!empty($interest)) {
