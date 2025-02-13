@@ -359,7 +359,7 @@ class EventController extends Controller
 
             // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
             if ($eventEndDateTime->lessThanOrEqualTo($now)) {
-                $event->status = 'expired';
+                $event->status = 'completed';
                 $event->save();
             }
         }
