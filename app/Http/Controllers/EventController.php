@@ -352,7 +352,7 @@ class EventController extends Controller
         foreach ($events as $event) {
             // Crear la fecha completa combinando `end_date` y `end_time`
             $eventEndDateTime = Carbon::createFromFormat(
-                'Y-m-d H:i:S',
+                'Y-m-d H:i:s',
                 "{$event->end_date} {$event->end_time}",
                 config('app.timezone') // Usar la zona horaria del servidor
             );
