@@ -113,6 +113,7 @@ class EventController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
             'start_time' => 'required',
             'end_time' => 'required',
+            'end_time_epoch' => 'required|numeric',
             'location' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
@@ -142,6 +143,7 @@ class EventController extends Controller
         $event->end_date = $request->end_date;
         $event->start_time = $request->start_time;
         $event->end_time = $request->end_time;
+        $event->end_time_epoch = $request->end_time_epoch;
         $event->location = $request->location;
         $event->latitude = $request->latitude;
         $event->longitude = $request->longitude;
@@ -344,32 +346,27 @@ class EventController extends Controller
     public function markExpiredEvents()
     {
         $nowEpoch = now()->timestamp; // Obtener la hora actual del servidor en Epoch
+        Log::info("🔵 Hora actual del servidor (Epoch): {$nowEpoch}");
 
         // Obtener eventos activos
         $events = Event::where('status', 'active')->get();
 
         foreach ($events as $event) {
-            // Concatenar fecha y hora tal como están en la BD
-            $eventEndDateTime = "{$event->end_date} {$event->end_time}";
+            Log::info("📌 Evento ID: {$event->id}");
+            Log::info("⏳ Fecha y hora almacenada (Local): {$event->end_date} {$event->end_time}");
+            Log::info("🔢 Fecha de fin en Epoch: {$event->end_time_epoch}");
 
-            // Convertir a Epoch (timestamp Unix)
-            $eventEndEpoch = Carbon::createFromFormat('Y-m-d H:i:s', $eventEndDateTime)
-                ->timestamp;
-
-            // Registrar en logs para depuración
-            Log::info("Evento ID: {$event->id} | Fecha almacenada: $eventEndDateTime | Epoch: $eventEndEpoch");
-            Log::info("Hora actual del servidor (Epoch): $nowEpoch");
-
-            // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
-            if ($eventEndEpoch <= $nowEpoch) {
+            // Comparar el epoch del evento con la hora actual
+            if ($event->end_time_epoch <= $nowEpoch) {
+                Log::warning("✅ Evento ID: {$event->id} ha expirado. Marcando como 'completed'...");
                 $event->status = 'completed';
                 $event->save();
-                Log::info("✅ Evento ID: {$event->id} marcado como COMPLETADO.");
             } else {
-                Log::info("❌ Evento ID: {$event->id} aún está ACTIVO.");
+                Log::info("❌ Evento ID: {$event->id} aún está activo.");
             }
         }
 
+        Log::info("✅ Proceso de actualización de eventos expirados finalizado.");
         return response()->json(['status' => true, 'message' => 'Eventos expirados actualizados']);
     }
 }
