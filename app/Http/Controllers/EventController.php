@@ -343,30 +343,31 @@ class EventController extends Controller
 
     public function markExpiredEvents()
     {
-        $now = now(); // Hora actual del servidor en UTC (según la configuración)
+        $now = now(); // Hora actual del servidor en UTC
 
-        Log::info("Hora actual del servidor: {$now}");
+        Log::info("Hora actual del servidor (UTC): {$now}");
 
         // Obtener eventos activos
         $events = Event::where('status', 'active')->get();
 
         foreach ($events as $event) {
-            // Convertir la fecha y hora del evento a UTC
-            $eventEndDateTime = Carbon::createFromFormat(
-                'Y-m-d H:i:s',
-                "{$event->end_date} {$event->end_time}",
-                config('app.timezone') // Asume que la zona horaria del servidor está en config('app.timezone')
-            )->timezone('UTC'); // Convertir a UTC
+            $eventLocalDateTime = "{$event->end_date} {$event->end_time}";
+
+            Log::info("Evento ID: {$event->id} | Fecha y hora almacenada (local): {$eventLocalDateTime}");
+
+            // Convertir fecha y hora del usuario a UTC
+            $eventEndDateTime = Carbon::createFromFormat('Y-m-d H:i', $eventLocalDateTime, config('app.timezone'))
+            ->setTimezone('UTC');
 
             Log::info("Evento ID: {$event->id} | Fecha de fin convertida a UTC: {$eventEndDateTime}");
 
-            // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
+            // Si la fecha y hora ya pasó en UTC, marcar el evento como completado
             if ($eventEndDateTime->lessThanOrEqualTo($now)) {
                 $event->status = 'completed';
                 $event->save();
-                Log::info("Evento ID: {$event->id} marcado como completado.");
+                Log::info("✅ Evento ID: {$event->id} marcado como COMPLETADO.");
             } else {
-                Log::info("Evento ID: {$event->id} aún está activo.");
+                Log::info("❌ Evento ID: {$event->id} aún está ACTIVO.");
             }
         }
 
