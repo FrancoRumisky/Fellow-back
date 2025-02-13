@@ -11,6 +11,7 @@ use App\Models\Report;
 use App\Models\FollowingList;
 use App\Models\Images;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
 {
@@ -343,22 +344,29 @@ class EventController extends Controller
     public function markExpiredEvents()
     {
         $now = now(); // Hora actual del servidor
+        Log::info("Hora actual del servidor: " . $now->toDateTimeString());
 
         // Obtener eventos activos
         $events = Event::where('status', 'active')->get();
 
         foreach ($events as $event) {
-            // Convertir la fecha y hora del evento a la zona horaria del servidor
+            // Crear la fecha completa combinando `end_date` y `end_time`
             $eventEndDateTime = Carbon::createFromFormat(
-                'Y-m-d H:i:s',
+                'Y-m-d H:i:S',
                 "{$event->end_date} {$event->end_time}",
-                config('app.timezone') // Se usa la zona horaria del servidor
+                config('app.timezone') // Usar la zona horaria del servidor
             );
+
+            // Imprimir la fecha y hora convertida
+            Log::info("Evento ID: {$event->id} | Fecha de fin convertida: " . $eventEndDateTime->toDateTimeString());
 
             // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
             if ($eventEndDateTime->lessThanOrEqualTo($now)) {
+                Log::info("Evento ID: {$event->id} marcado como COMPLETADO.");
                 $event->status = 'completed';
                 $event->save();
+            } else {
+                Log::info("Evento ID: {$event->id} aún está activo.");
             }
         }
 
