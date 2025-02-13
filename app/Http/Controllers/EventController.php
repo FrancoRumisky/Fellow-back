@@ -133,33 +133,14 @@ class EventController extends Controller
             $imagePath = $request->file('image')->store('events', 'public'); // Guardar imagen en almacenamiento público
         }
 
-        \Illuminate\Support\Facades\Log::info('Datos recibidos:', [
-            'start_date' => $request->start_date,
-            'start_time' => $request->start_time,
-            'end_date' => $request->end_date,
-            'end_time' => $request->end_time,
-        ]);
-
-    
-
-        $startDateTime = Carbon::parse("{$request->start_date} {$request->start_time}")->setTimezone('UTC');
-        $endDateTime = Carbon::parse("{$request->end_date} {$request->end_time}")->setTimezone('UTC');
-
-        \Illuminate\Support\Facades\Log::info('Fechas convertidas:', [
-            'start_date' => $startDateTime->toDateString(),
-            'start_time' => $startDateTime->toTimeString(),
-            'end_date' => $endDateTime->toDateString(),
-            'end_time' => $endDateTime->toTimeString(),
-        ]);
-
         // Crear el evento
         $event = new Event();
         $event->title = $request->title;
         $event->description = $request->description;
-        $event->start_date = $startDateTime->toDateString();
-        $event->end_date = $endDateTime->toDateString();
-        $event->start_time = $startDateTime->toTimeString();
-        $event->end_time = $endDateTime->toTimeString();
+        $event->start_date = $request->start_date;
+        $event->end_date = $request->end_date;
+        $event->start_time = $request->start_time;
+        $event->end_time = $request->end_time;
         $event->location = $request->location;
         $event->latitude = $request->latitude;
         $event->longitude = $request->longitude;
@@ -371,8 +352,8 @@ class EventController extends Controller
             $eventEndDateTime = Carbon::createFromFormat(
                 'Y-m-d H:i:s',
                 "{$event->end_date} {$event->end_time}",
-                'UTC'
-            )->setTimezone(config('app.timezone')); // Convertir a la zona horaria del servidor
+                config('app.timezone') // Se usa la zona horaria del servidor
+            );
 
             // Si la fecha y hora convertida ya pasó, marcar el evento como expirado
             if ($eventEndDateTime->lessThanOrEqualTo($now)) {
