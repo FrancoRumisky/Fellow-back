@@ -264,8 +264,6 @@ $(document).ready(function () {
         }
     });
 
-    console.log("Cargando reportes de eventos...");
-
     $("#fetchEventReport").dataTable({
     processing: true,
     serverSide: true,
@@ -394,6 +392,21 @@ $(document).ready(function () {
             iconUrl: app.cancleIcon,
         });
     }
-});
+    });
+    $("#fetchEventReport").on("click", ".viewEvent", function (e) {
+        e.preventDefault();
+
+        var title = $(this).data("title");
+        var description = $(this).data("description");
+        var image = $(this).data("image");
+
+        // Asignar valores al modal
+        $("#eventModalTitle").text(title);
+        $("#eventModalDescription").text(description);
+        $("#eventModalImage").attr("src", image);
+
+        // Mostrar el modal
+        $("#viewEventModal").modal("show");
+    });
 
 });

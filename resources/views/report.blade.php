@@ -124,4 +124,33 @@
     </div>
 </div>
 
+<!-- View Event Modal -->
+<div class="modal fade" id="viewEventModal" tabindex="-1" aria-labelledby="viewEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5 fw-normal" id="viewEventModalLabel">{{ __('View Event') }}</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>{{ __('Title') }}</label>
+                    <p id="eventModalTitle"></p>
+                </div>
+                <div class="form-group">
+                    <label>{{ __('Description') }}</label>
+                    <p id="eventModalDescription"></p>
+                </div>
+                <div class="form-group">
+                    <label>{{ __('Image') }}</label>
+                    <img id="eventModalImage" src="" class="img-fluid rounded" alt="Event Image">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
