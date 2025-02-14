@@ -280,6 +280,7 @@ $(document).ready(function () {
         data: function (data) {},
     },
     });
+
     $("#fetchEventReport").on("click", ".rejectReport", function (e) {
     e.preventDefault();
 
