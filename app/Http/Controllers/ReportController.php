@@ -10,8 +10,10 @@ use App\Models\PostContent;
 use App\Models\Report;
 use App\Models\UserNotification;
 use App\Models\Users;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+
 
 class ReportController extends Controller
 {
@@ -42,7 +44,7 @@ class ReportController extends Controller
         if ($user->is_block == 0) {
 
             $reportType = 1;
-                        
+
             $report = new Report();
             $report->user_id = $request->user_id;
             $report->type = $reportType;
@@ -55,7 +57,7 @@ class ReportController extends Controller
                 'data' => $report,
             ]);
         } else {
-             return response()->json([
+            return response()->json([
                 'status' => false,
                 'message' => 'user already blocked!',
             ]);
@@ -68,7 +70,7 @@ class ReportController extends Controller
         $reportType = 1;
         $totalData = Report::where('type', $reportType)->count();
         $rows = Report::where('type', $reportType)->orderBy('id', 'DESC')->with('user')->get();
-        
+
         $result = $rows;
 
         $columns = array(
@@ -79,46 +81,46 @@ class ReportController extends Controller
         $start = $request->input('start');
         $order = $columns[$request->input('order.0.column')];
         $dir = $request->input('order.0.dir');
-        
+
         $totalFiltered = $totalData;
         if (empty($request->input('search.value'))) {
             $result = Report::where('type', $reportType)->offset($start)
-                            ->limit($limit)
-                            ->orderBy($order, $dir)->with('user')
-                            ->get();
+                ->limit($limit)
+                ->orderBy($order, $dir)->with('user')
+                ->get();
         } else {
             $search = $request->input('search.value');
             $result =  Report::where('type', $reportType)->with('user')
-                                ->whereHas('user', function ($query) use ($search) {
-                                    $query->Where('fullname', 'LIKE', "%{$search}%")
-                                        ->orWhere('identity', 'LIKE', "%{$search}%");
-                                })
-                                ->orWhere('reason', 'LIKE', "%{$search}%")
-                                ->offset($start)
-                                ->limit($limit)
-                                ->orderBy($order, $dir)->with('user')
-                                ->get();
+                ->whereHas('user', function ($query) use ($search) {
+                    $query->Where('fullname', 'LIKE', "%{$search}%")
+                        ->orWhere('identity', 'LIKE', "%{$search}%");
+                })
+                ->orWhere('reason', 'LIKE', "%{$search}%")
+                ->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)->with('user')
+                ->get();
             $totalFiltered = Report::where('type', $reportType)->with('user')
-                                    ->whereHas('user', function ($query) use ($search) {
-                                        $query->Where('fullname', 'LIKE', "%{$search}%")
-                                            ->orWhere('identity', 'LIKE', "%{$search}%");
-                                    })
-                                    ->orWhere('reason', 'LIKE', "%{$search}%")
-                                    ->count();
+                ->whereHas('user', function ($query) use ($search) {
+                    $query->Where('fullname', 'LIKE', "%{$search}%")
+                        ->orWhere('identity', 'LIKE', "%{$search}%");
+                })
+                ->orWhere('reason', 'LIKE', "%{$search}%")
+                ->count();
         }
         $data = array();
         foreach ($result as $item) {
 
             $imgUrl = "http://placehold.jp/150x150.png"; // Default placeholder image URL
-    
+
             if ($item->user->images->isNotEmpty() && $item->user->images[0]->image != null) {
                 $imgUrl = asset('storage/' . $item->user->images[0]->image);
             }
 
-            $image = '<img src="'.$imgUrl.'" width="50" height="50">';
+            $image = '<img src="' . $imgUrl . '" width="50" height="50">';
 
-            $reason = '<span class="item-description"> '. $item->reason .' </span>';
-            $description = '<span class="item-description"> '. $item->description .' </span>';
+            $reason = '<span class="item-description"> ' . $item->reason . ' </span>';
+            $description = '<span class="item-description"> ' . $item->description . ' </span>';
 
             $block = '<a class="btn btn-danger text-white block" rel=' . $item->user->id . ' >' . __('app.Block') . '</a>';
 
@@ -163,10 +165,10 @@ class ReportController extends Controller
             ]);
         }
     }
-    
+
     public function postReportList(Request $request)
     {
-        $reportType = 0;    
+        $reportType = 0;
         $totalData = Report::where('type', $reportType)->count();
         $rows = Report::where('type', $reportType)->orderBy('id', 'DESC')->get();
 
@@ -185,28 +187,28 @@ class ReportController extends Controller
         $dir = $request->input('order.0.dir');
 
         $totalFiltered = $totalData;
-        
+
         if (empty($request->input('search.value'))) {
             $result = Report::where('type', $reportType)
-                            ->orderBy($order, $dir)
-                            ->get();
+                ->orderBy($order, $dir)
+                ->get();
         } else {
             $search = $request->input('search.value');
             $result = Report::where('type', $reportType)
-                            ->Where('reason', 'LIKE', "%{$search}%")
-                            ->orWhere('description', 'LIKE', "%{$search}%")
-                            ->offset($start)
-                            ->limit($limit)
-                            ->orderBy($order, $dir)
-                            ->get();
+                ->Where('reason', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
             $totalFiltered = Report::where('type', $reportType)
-                                    ->Where('reason', 'LIKE', "%{$search}%")
-                                    ->orWhere('description', 'LIKE', "%{$search}%")
-                                    ->count();
+                ->Where('reason', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->count();
         }
         $data = [];
         foreach ($result as $item) {
-            
+
             $post = Post::where('id', $item->post_id)->first();
 
             if ($post->description == null) {
@@ -250,7 +252,7 @@ class ReportController extends Controller
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-image"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg> View Post</button>';
             }
 
-            $description = '<span class="item-description"> '. $post->description .' </span>';
+            $description = '<span class="item-description"> ' . $post->description . ' </span>';
 
             $rejectReport = '<a href="#" class="me-3 btn btn-orange px-4 text-white rejectReport d-flex align-items-center" rel=' . $item->id . ' data-tooltip="Reject Report" >' . __('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clipboard"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg> <span class="ms-2"> Reject </span>') . '</a>';
             $delete = '<a href="#" class="btn btn-danger px-4 text-white delete deletePost d-flex align-items-center" rel=' . $item->id . ' data-tooltip="Delete Post">' . __('Delete ') . '</a>';
@@ -270,6 +272,93 @@ class ReportController extends Controller
             'recordsFiltered' => $totalFiltered,
             'data' => $data,
         ];
+        echo json_encode($json_data);
+        exit();
+    }
+
+    public function eventReportList(Request $request)
+    {
+        $reportType = 2; // Tipo de reporte para eventos
+        $totalData = Report::where('type', $reportType)->count();
+        $rows = Report::where('type', $reportType)->orderBy('id', 'DESC')->get();
+
+        $result = $rows;
+
+        $columns = [
+            0 => 'id',
+            1 => 'event_id',
+            2 => 'reason',
+            3 => 'description',
+        ];
+
+        $limit = $request->input('length');
+        $start = $request->input('start');
+        $order = $columns[$request->input('order.0.column')];
+        $dir = $request->input('order.0.dir');
+
+        $totalFiltered = $totalData;
+
+        if (empty($request->input('search.value'))) {
+            $result = Report::where('type', $reportType)
+                ->orderBy($order, $dir)
+                ->get();
+        } else {
+            $search = $request->input('search.value');
+            $result = Report::where('type', $reportType)
+                ->where('reason', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+            $totalFiltered = Report::where('type', $reportType)
+                ->where('reason', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->count();
+        }
+
+        $data = [];
+        foreach ($result as $item) {
+            $event = Event::where('id', $item->event_id)->first();
+
+            if (!$event) {
+                continue; // Si el evento no existe, omitir este reporte
+            }
+
+            $eventTitle = $event->title ?? 'Evento sin título';
+            $eventDescription = $event->description ?? 'Sin descripción disponible';
+
+            $viewEvent = '<button type="button" class="btn btn-primary viewEvent commonViewBtn" data-bs-toggle="modal" data-description="' .
+                $eventDescription .
+                '" rel="' .
+                $item->id .
+                '">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> Ver Evento</button>';
+
+            $description = '<span class="item-description">' . $eventDescription . ' </span>';
+
+            $rejectReport = '<a href="#" class="me-3 btn btn-orange px-4 text-white rejectReport d-flex align-items-center" rel=' . $item->id . ' data-tooltip="Rechazar Reporte" >' .
+                __('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x-circle"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg> <span class="ms-2"> Rechazar </span>') . '</a>';
+
+            $deleteEvent = '<a href="#" class="btn btn-danger px-4 text-white delete deleteEvent d-flex align-items-center" rel=' . $item->id . ' data-tooltip="Eliminar Evento">' . __('Eliminar Evento ') . '</a>';
+
+            $action = '<span class="float-right d-flex">' . $rejectReport . $deleteEvent . ' </span>';
+
+            $data[] = [
+                $viewEvent,
+                $item->reason,
+                $description,
+                $action
+            ];
+        }
+
+        $json_data = [
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => intval($totalData),
+            'recordsFiltered' => $totalFiltered,
+            'data' => $data,
+        ];
+
         echo json_encode($json_data);
         exit();
     }
@@ -319,7 +408,7 @@ class ReportController extends Controller
 
             $userNotification = UserNotification::where('post_id', $report->post_id)->get();
             $userNotification->each->delete();
-            
+
             $post = Post::where('id', $report->post_id)->first();
             $post->delete();
 
@@ -337,4 +426,61 @@ class ReportController extends Controller
         ]);
     }
 
+    public function rejectEventReport(Request $request)
+    {
+        // Buscar el reporte de evento
+        $report = Report::where('id', $request->report_id)->first();
+
+        if ($report) {
+            // Eliminar el reporte del evento
+            $eventReports = Report::where('event_id', $report->event_id)->get();
+            $eventReports->each->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Event report rejected successfully',
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Report not found',
+            ]);
+        }
+    }
+
+    public function deleteEventFromReport(Request $request)
+    {
+        // Buscar el reporte de evento
+        $report = Report::where('id', $request->report_id)->first();
+
+        if ($report) {
+            // Buscar el evento
+            $event = Event::where('id', $report->event_id)->first();
+
+            if ($event) {
+                // Eliminar reportes relacionados con el evento
+                Report::where('event_id', $event->id)->delete();
+
+                // Eliminar notificaciones relacionadas con el evento
+                UserNotification::where('event_id', $event->id)->delete();
+
+                // Finalmente, eliminar el evento (esto elimina asistentes automáticamente)
+                $event->delete();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Event deleted successfully',
+                ]);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Event not found',
+                ]);
+            }
+        }
+        return response()->json([
+            'status' => false,
+            'message' => 'Report not found',
+        ]);
+    }
 }

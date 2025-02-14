@@ -346,27 +346,20 @@ class EventController extends Controller
     public function markExpiredEvents()
     {
         $nowEpoch = now()->timestamp; // Obtener la hora actual del servidor en Epoch
-        Log::info("🔵 Hora actual del servidor (Epoch): {$nowEpoch}");
 
         // Obtener eventos activos
         $events = Event::where('status', 'active')->get();
 
         foreach ($events as $event) {
-            Log::info("📌 Evento ID: {$event->id}");
-            Log::info("⏳ Fecha y hora almacenada (Local): {$event->end_date} {$event->end_time}");
-            Log::info("🔢 Fecha de fin en Epoch: {$event->end_time_epoch}");
 
             // Comparar el epoch del evento con la hora actual
             if ($event->end_time_epoch <= $nowEpoch) {
-                Log::warning("✅ Evento ID: {$event->id} ha expirado. Marcando como 'completed'...");
                 $event->status = 'completed';
                 $event->save();
             } else {
                 Log::info("❌ Evento ID: {$event->id} aún está activo.");
             }
         }
-
-        Log::info("✅ Proceso de actualización de eventos expirados finalizado.");
         return response()->json(['status' => true, 'message' => 'Eventos expirados actualizados']);
     }
 }

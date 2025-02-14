@@ -92,6 +92,9 @@ Route::post('postReportList', [ReportController::class, 'postReportList'])->midd
 Route::post('deleteReport', [ReportController::class, 'deleteReport'])->middleware(['checkLogin'])->name('deleteReport');
 Route::post('rejectUserReport', [ReportController::class, 'rejectUserReport'])->middleware(['checkLogin'])->name('rejectUserReport');
 Route::post('deletePostFromReport', [ReportController::class, 'deletePostFromReport'])->middleware(['checkLogin'])->name('deletePostFromReport');
+Route::post('rejectEventReport', [ReportController::class, 'rejectEventReport'])->middleware(['checkLogin'])->name('rejectEventReport');
+Route::post('deleteEventFromReport', [ReportController::class, 'deleteEventFromReport'])->middleware(['checkLogin'])->name('deleteEventFromReport');
+Route::post('eventReportList', [ReportController::class, 'eventReportList'])->middleware(['checkLogin'])->name('eventReportList');
 
 /*|--------------------------------------------------------------------------|
 | Notification  Route

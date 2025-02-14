@@ -264,4 +264,133 @@ $(document).ready(function () {
         }
     });
 
+    $("#fetchEventReport").dataTable({
+    processing: true,
+    serverSide: true,
+    serverMethod: "post",
+    aaSorting: [[0, "desc"]],
+    columnDefs: [
+        {
+            targets: [0, 1, 2, 3],
+            orderable: false,
+        },
+    ],
+    ajax: {
+        url: `${domainUrl}eventReportList`,  // Endpoint para obtener los reportes de eventos
+        data: function (data) {},
+    },
+    });
+    $("#fetchEventReport").on("click", ".rejectReport", function (e) {
+    e.preventDefault();
+
+    if (user_type == 1) {
+        var id = $(this).attr("rel");
+
+        swal({
+            title: "Are you sure?",
+            icon: "error",
+            buttons: true,
+            dangerMode: true,
+            buttons: ["Cancel", "Yes"],
+        }).then((deleteValue) => {
+            if (deleteValue) {
+                $.ajax({
+                    type: "POST",
+                    url: `${domainUrl}rejectEventReport`,  // Ruta del backend
+                    data: {
+                        report_id: id,
+                    },
+                    dataType: "json",
+                    success: function (response) {
+                        if (response.status == false) {
+                            console.log(response.message);
+                        } else if (response.status == true) {
+                            iziToast.show({
+                                title: app.Success,
+                                message: "Event report rejected successfully",
+                                color: app.greenToast,
+                                position: app.toastPosition,
+                                transitionIn: app.fadeInAction,
+                                transitionOut: app.fadeOutAction,
+                                timeout: app.timeout,
+                                animateInside: false,
+                                iconUrl: app.checkCircleIcon,
+                            });
+                            $("#fetchEventReport").DataTable().ajax.reload(null, false);
+                        }
+                    },
+                });
+            }
+        });
+    } else {
+        iziToast.show({
+            title: `${app.Error}!`,
+            message: app.tester,
+            color: app.redToast,
+            position: app.toastPosition,
+            transitionIn: app.transitionInAction,
+            transitionOut: app.transitionOutAction,
+            timeout: app.timeout,
+            animateInside: false,
+            iconUrl: app.cancleIcon,
+        });
+    }
+    });
+    $("#fetchEventReport").on("click", ".deleteEvent", function (e) {
+    e.preventDefault();
+
+    if (user_type == 1) {
+        var id = $(this).attr("rel");
+
+        swal({
+            title: "Are you sure?",
+            icon: "error",
+            buttons: true,
+            dangerMode: true,
+            buttons: ["Cancel", "Yes"],
+        }).then((deleteValue) => {
+            if (deleteValue) {
+                $.ajax({
+                    type: "POST",
+                    url: `${domainUrl}deleteEventFromReport`,  // Ruta del backend
+                    data: {
+                        event_id: id,
+                    },
+                    dataType: "json",
+                    success: function (response) {
+                        if (response.status == false) {
+                            console.log(response.message);
+                        } else if (response.status == true) {
+                            iziToast.show({
+                                title: app.Success,
+                                message: "Event deleted successfully",
+                                color: app.greenToast,
+                                position: app.toastPosition,
+                                transitionIn: app.fadeInAction,
+                                transitionOut: app.fadeOutAction,
+                                timeout: app.timeout,
+                                animateInside: false,
+                                iconUrl: app.checkCircleIcon,
+                            });
+                            $("#fetchEventReport").DataTable().ajax.reload(null, false);
+                        }
+                    },
+                });
+            }
+        });
+    } else {
+        iziToast.show({
+            title: `${app.Error}!`,
+            message: app.tester,
+            color: app.redToast,
+            position: app.toastPosition,
+            transitionIn: app.transitionInAction,
+            transitionOut: app.transitionOutAction,
+            timeout: app.timeout,
+            animateInside: false,
+            iconUrl: app.cancleIcon,
+        });
+    }
+});
+
 });
