@@ -393,20 +393,19 @@ $(document).ready(function () {
         });
     }
     });
+    
     $("#fetchEventReport").on("click", ".viewEvent", function (e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        var title = $(this).data("title");
-        var description = $(this).data("description");
-        var image = $(this).data("image");
+    var title = $(this).data("title");
+    var description = $(this).data("description");
+    var image = $(this).data("image");
 
-        // Asignar valores al modal
-        $("#eventModalTitle").text(title);
-        $("#eventModalDescription").text(description);
-        $("#eventModalImage").attr("src", image);
+    $("#eventModalTitle").text(title);
+    $("#eventModalDescription").text(description);
+    $("#eventModalImage").attr("src", image);
 
-        // Mostrar el modal
-        $("#viewEventModal").modal("show");
-    });
+    $("#viewEventModal").modal("show");
+});
 
 });

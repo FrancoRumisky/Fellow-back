@@ -278,7 +278,7 @@ class ReportController extends Controller
 
     public function eventReportList(Request $request)
     {
-        $reportType = 2; // Tipo de reporte para eventos (Asegúrate de que en la BD se distingue entre posts y eventos)
+        $reportType = 2; // Tipo de reporte para eventos
         $totalData = Report::where('type', $reportType)->count();
         $rows = Report::where('type', $reportType)->orderBy('id', 'DESC')->get();
 
@@ -325,18 +325,21 @@ class ReportController extends Controller
                 continue; // Si el evento no existe, pasamos al siguiente
             }
 
+            // Construcción de la URL correcta para la imagen
+            $eventImage = $event->image ? asset('public/storage/' . $event->image) : asset('default-image.jpg');
+
             $viewEvent = '<button type="button" class="btn btn-primary viewEvent commonViewBtn" 
                         data-bs-toggle="modal" 
-                        data-title="' . $event->title . '" 
-                        data-description="' . $event->description . '" 
-                        data-image="' . $event->image . '" 
+                        data-title="' . htmlspecialchars($event->title, ENT_QUOTES) . '" 
+                        data-description="' . htmlspecialchars($event->description, ENT_QUOTES) . '" 
+                        data-image="' . $eventImage . '" 
                         rel="' . $item->id . '">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle></svg> View Event
                      </button>';
 
-            $description = '<span class="item-description">' . $event->description . '</span>';
+            $description = '<span class="item-description">' . htmlspecialchars($event->description, ENT_QUOTES) . '</span>';
 
             $rejectReport = '<a href="#" class="me-3 btn btn-orange px-4 text-white rejectReport d-flex align-items-center" rel=' . $item->id . ' data-tooltip="Reject Report">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x-circle">
