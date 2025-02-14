@@ -264,6 +264,8 @@ $(document).ready(function () {
         }
     });
 
+    console.log("Cargando reportes de eventos...");
+
     $("#fetchEventReport").dataTable({
     processing: true,
     serverSide: true,
