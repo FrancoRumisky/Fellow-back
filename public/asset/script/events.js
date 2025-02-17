@@ -20,29 +20,34 @@ $(document).ready(function () {
     });
 
     // Mostrar los detalles del evento en el modal
-    $("#eventsTable").on("click", ".viewEvent", function (e) {
-        e.preventDefault();
+   $("#eventsTable").on("click", ".viewEvent", function (e) {
+    e.preventDefault();
+    
+    var eventData = {
+        title: $(this).data("title"),
+        organizer: $(this).data("organizer"),
+        startDate: $(this).data("start-date"),
+        endDate: $(this).data("end-date"),
+        availableSlots: $(this).data("available-slots"),
+        capacity: $(this).data("capacity"),
+        status: $(this).data("status"),
+        description: $(this).data("description"),
+        image: $(this).data("image"),
+    };
 
-        var title = $(this).data("title");
-        var organizer = $(this).data("organizer");
-        var startDate = $(this).data("start-date");
-        var endDate = $(this).data("end-date");
-        var availableSlots = $(this).data("available-slots");
-        var capacity = $(this).data("capacity");
-        var status = $(this).data("status");
-        var description = $(this).data("description");
-        var image = $(this).data("image");
+    console.log("Evento seleccionado:", eventData);
 
-        $("#eventModalTitle").text(title);
-        $("#eventModalOrganizer").text(organizer);
-        $("#eventModalStartDate").text(startDate);
-        $("#eventModalEndDate").text(endDate);
-        $("#eventModalAvailableSlots").text(availableSlots);
-        $("#eventModalCapacity").text(capacity);
-        $("#eventModalStatus").text(status);
-        $("#eventModalDescription").text(description);
-        $("#eventModalImage").attr("src", image);
+    // Mostrar en el modal
+    $("#eventModalTitle").text(eventData.title);
+    $("#eventModalOrganizer").text(eventData.organizer);
+    $("#eventModalStartDate").text(eventData.startDate);
+    $("#eventModalEndDate").text(eventData.endDate);
+    $("#eventModalAvailableSlots").text(eventData.availableSlots);
+    $("#eventModalCapacity").text(eventData.capacity);
+    $("#eventModalStatus").text(eventData.status);
+    $("#eventModalDescription").text(eventData.description);
+    $("#eventModalImage").attr("src", eventData.image);
 
-        $("#viewEventModal").modal("show");
-    });
+    $("#viewEventModal").modal("show");
+});
 });

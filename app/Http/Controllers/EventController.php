@@ -385,13 +385,16 @@ class EventController extends Controller
 
         $limit = $request->input('length');
         $start = $request->input('start');
-        $order = $columns[$request->input('order.0.column')];
-        $dir = $request->input('order.0.dir');
+        $order = $columns[$request->input('order.0.column', 0)] ?? 'id';
+        $dir = $request->input('order.0.dir', 'desc');
 
         $totalFiltered = $totalData;
 
         if (empty($request->input('search.value'))) {
-            $events = Event::orderBy($order, $dir)->get();
+            $events = Event::orderBy($order, $dir)
+                ->offset($start)
+                ->limit($limit)
+                ->get();
         } else {
             $search = $request->input('search.value');
             $events = Event::where('title', 'LIKE', "%{$search}%")
