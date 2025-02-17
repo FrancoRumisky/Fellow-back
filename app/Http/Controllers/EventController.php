@@ -18,7 +18,7 @@ class EventController extends Controller
 
     public function events()
     {
-        return view('viewStories');
+        return view('events');
     }
 
     public function organizer()
@@ -395,15 +395,15 @@ class EventController extends Controller
         } else {
             $search = $request->input('search.value');
             $events = Event::where('title', 'LIKE', "%{$search}%")
-            ->orWhere('description', 'LIKE', "%{$search}%")
-            ->offset($start)
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir)
                 ->get();
 
             $totalFiltered = Event::where('title', 'LIKE', "%{$search}%")
-            ->orWhere('description', 'LIKE', "%{$search}%")
-            ->count();
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->count();
         }
 
         $data = [];
