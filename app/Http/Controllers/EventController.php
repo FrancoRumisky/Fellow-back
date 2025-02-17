@@ -362,4 +362,85 @@ class EventController extends Controller
         }
         return response()->json(['status' => true, 'message' => 'Eventos expirados actualizados']);
     }
+
+    public function eventsList(Request $request)
+    {
+        $totalData = Event::count();
+        $events = Event::orderBy('id', 'DESC')->get();
+
+        $columns = [
+            0 => 'id',
+            1 => 'organizer_id',
+            2 => 'start_date',
+            3 => 'end_date',
+            4 => 'available_slots',
+            5 => 'capacity',
+            6 => 'status',
+        ];
+
+        $limit = $request->input('length');
+        $start = $request->input('start');
+        $order = $columns[$request->input('order.0.column')];
+        $dir = $request->input('order.0.dir');
+
+        $totalFiltered = $totalData;
+
+        if (empty($request->input('search.value'))) {
+            $events = Event::orderBy($order, $dir)->get();
+        } else {
+            $search = $request->input('search.value');
+            $events = Event::where('title', 'LIKE', "%{$search}%")
+            ->orWhere('description', 'LIKE', "%{$search}%")
+            ->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
+
+            $totalFiltered = Event::where('title', 'LIKE', "%{$search}%")
+            ->orWhere('description', 'LIKE', "%{$search}%")
+            ->count();
+        }
+
+        $data = [];
+        foreach ($events as $event) {
+            $organizer = User::where('id', $event->organizer_id)->first();
+            $organizerName = $organizer ? $organizer->full_name : 'Unknown';
+
+            $eventImage = $event->image ? asset('public/storage/' . $event->image) : asset('default-image.jpg');
+
+            $viewEvent = '<button type="button" class="btn btn-primary viewEvent commonViewBtn" 
+                        data-bs-toggle="modal" 
+                        data-title="' . htmlspecialchars($event->title, ENT_QUOTES) . '" 
+                        data-organizer="' . htmlspecialchars($organizerName, ENT_QUOTES) . '" 
+                        data-start-date="' . $event->start_date . '" 
+                        data-end-date="' . $event->end_date . '" 
+                        data-available-slots="' . $event->available_slots . '"
+                        data-capacity="' . $event->capacity . '"
+                        data-status="' . $event->status . '"
+                        data-description="' . htmlspecialchars($event->description, ENT_QUOTES) . '" 
+                        data-image="' . $eventImage . '" 
+                        rel="' . $event->id . '">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle></svg> View Event
+                     </button>';
+
+            $data[] = [
+                $viewEvent,
+                $organizerName,
+                $event->start_date,
+                $event->end_date,
+                $event->available_slots,
+                $event->capacity,
+                $event->status,
+            ];
+        }
+
+        return response()->json([
+            'draw' => intval($request->input('draw')),
+            'recordsTotal' => intval($totalData),
+            'recordsFiltered' => $totalFiltered,
+            'data' => $data,
+        ]);
+    }
 }

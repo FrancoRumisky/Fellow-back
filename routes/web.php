@@ -184,6 +184,10 @@ Route::post('userStoryList', [PostController::class, 'userStoryList'])->middlewa
 Route::post('allStoriesList', [PostController::class, 'allStoriesList'])->middleware(['checkLogin'])->name('allStoriesList');
 Route::post('deleteStoryFromAdmin', [PostController::class, 'deleteStoryFromAdmin'])->middleware(['checkLogin'])->name('deleteStoryFromAdmin');
 
+/*|--------------------------------------------------------------------------|
+| Event Route 
+|--------------------------------------------------------------------------|*/
+
 
 Route::post('deleteUserFromAdmin', [UsersController::class, 'deleteUserFromAdmin'])->middleware(['checkLogin'])->name('deleteUserFromAdmin');
 
