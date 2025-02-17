@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\Log;
 class EventController extends Controller
 {
 
+    public function events()
+    {
+        return view('viewStories');
+    }
+
     public function organizer()
     {
         return $this->belongsTo(User::class, 'organizer_id', 'id'); // Ajusta el modelo y campos según tu base de datos

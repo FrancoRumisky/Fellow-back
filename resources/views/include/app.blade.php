@@ -82,7 +82,7 @@
                             </a>
                         </li>
                         <li class="sideBarli eventSideA">
-                            <a href="{{ route('eventsList') }}" class="nav-link">
+                            <a href="{{ route('events') }}" class="nav-link">
                                 <i class="fas fa-calendar-alt"></i>
                                 <span>{{ __('app.Events') }}</span>
                             </a>
