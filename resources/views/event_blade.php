@@ -1,7 +1,7 @@
 @extends('include.app')
 
 @section('header')
-<script src="{{ asset('asset/script/event.js') }}"></script>
+<script src="{{ asset('asset/script/events.js') }}"></script>
 @endsection
 
 @section('content')
