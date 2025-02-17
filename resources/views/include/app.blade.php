@@ -81,6 +81,12 @@
                                 <span> {{ __('app.Posts') }} </span>
                             </a>
                         </li>
+                        <li class="sideBarli eventSideA">
+                            <a href="{{ route('events') }}" class="nav-link">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>{{ __('app.Events') }}</span>
+                            </a>
+                        </li>
                         <li class="sideBarli storySideA">
                             <a href="{{ route('viewStories') }}" class="nav-link">
                                 <i class="fas fa-compact-disc"></i>

@@ -12,6 +12,7 @@ use App\Http\Controllers\RedeemRequestsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -187,7 +188,7 @@ Route::post('deleteStoryFromAdmin', [PostController::class, 'deleteStoryFromAdmi
 /*|--------------------------------------------------------------------------|
 | Event Route 
 |--------------------------------------------------------------------------|*/
-
+Route::get('events', [EventController::class, 'index'])->middleware(['checkLogin'])->name('events');
 
 Route::post('deleteUserFromAdmin', [UsersController::class, 'deleteUserFromAdmin'])->middleware(['checkLogin'])->name('deleteUserFromAdmin');
 
