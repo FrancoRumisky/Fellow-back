@@ -15,12 +15,15 @@ $(document).ready(function () {
         ],
         ajax: {
             url: `${domainUrl}eventsList`,
-            data: function (data) {},
+            data: function (data) { },
+             complete: function (response) {
+            console.log("Datos recibidos:", response.responseJSON);  // Verifica los datos devueltos
+        }
         },
     });
 
     // Mostrar los detalles del evento en el modal
-   $("#eventsTable").on("click", ".viewEvent", function (e) {
+  $("#eventsTable").on("click", ".viewEvent", function (e) {
     e.preventDefault();
     
     var eventData = {
