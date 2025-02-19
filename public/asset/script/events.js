@@ -22,6 +22,61 @@ $(document).ready(function () {
         },
     });
 
+    // 🛑 FUNCIÓN PARA ELIMINAR EVENTOS
+    $(document).on("click", ".deleteEvent", function (e) {
+        e.preventDefault();
+        
+        var eventId = $(this).attr("rel"); // Obtener ID del evento
+        console.log("Evento a eliminar:", eventId);
+
+        swal({
+            title: "Are you sure?",
+            text: "Once deleted, you will not be able to recover this event!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+            buttons: ["Cancel", "Yes, delete it"],
+        }).then((confirmDelete) => {
+            if (confirmDelete) {
+                $.ajax({
+                    type: "POST",
+                    url: `${domainUrl}deleteEvent`, // Ruta en Laravel
+                    dataType: "json",
+                    data: {
+                        event_id: eventId,
+                        _token: $('meta[name="csrf-token"]').attr("content"), // Token CSRF
+                    },
+                    success: function (response) {
+                        if (response.status === false) {
+                            console.log(response.message);
+                        } else {
+                            iziToast.show({
+                                title: "Success",
+                                message: "Event deleted successfully",
+                                color: "green",
+                                position: "topRight",
+                                timeout: 3000,
+                            });
+
+                            // Recargar la tabla después de eliminar
+                            $("#eventsTable").DataTable().ajax.reload(null, false);
+                        }
+                    },
+                    error: function (error) {
+                        console.log("Error:", error);
+                        iziToast.show({
+                            title: "Error",
+                            message: "Failed to delete event",
+                            color: "red",
+                            position: "topRight",
+                            timeout: 3000,
+                        });
+                    },
+                });
+            }
+        });
+    });
+
     // Mostrar los detalles del evento en el modal
   $("#eventsTable").on("click", ".viewEvent", function (e) {
     e.preventDefault();

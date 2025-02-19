@@ -190,6 +190,7 @@ Route::post('deleteStoryFromAdmin', [PostController::class, 'deleteStoryFromAdmi
 |--------------------------------------------------------------------------|*/
 Route::get('events', [EventController::class, 'events'])->middleware(['checkLogin'])->name('events');
 Route::post('eventsList', [EventController::class, 'eventsList'])->middleware(['checkLogin'])->name('eventsList');
+Route::post('deleteEvent', [EventController::class, 'deleteEvent'])->middleware(['checkLogin'])->name('deleteEvent');
 
 Route::post('deleteUserFromAdmin', [UsersController::class, 'deleteUserFromAdmin'])->middleware(['checkLogin'])->name('deleteUserFromAdmin');
 
