@@ -441,6 +441,7 @@ class EventController extends Controller
                 $event->available_slots,
                 $event->capacity,
                 $event->status,
+                '<button class="btn btn-danger deleteEvent" rel="' . $event->id . '">Delete</button>', // 7 (Acciones)
             ];
         }
 
