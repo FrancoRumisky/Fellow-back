@@ -15,10 +15,7 @@ $(document).ready(function () {
         ],
         ajax: {
             url: `${domainUrl}eventsList`,
-            data: function (data) { },
-             complete: function (response) {
-            console.log("Datos recibidos:", response.responseJSON);  // Verifica los datos devueltos
-        }
+            data: function (data) {},
         },
     });
 
@@ -78,34 +75,34 @@ $(document).ready(function () {
     });
 
     // Mostrar los detalles del evento en el modal
-  $("#eventsTable").on("click", ".viewEvent", function (e) {
-    e.preventDefault();
-    
-    var eventData = {
-        title: $(this).data("title"),
-        organizer: $(this).data("organizer"),
-        startDate: $(this).data("start-date"),
-        endDate: $(this).data("end-date"),
-        availableSlots: $(this).data("available-slots"),
-        capacity: $(this).data("capacity"),
-        status: $(this).data("status"),
-        description: $(this).data("description"),
-        image: $(this).data("image"),
-    };
+    $("#eventsTable").on("click", ".viewEvent", function (e) {
+        e.preventDefault();
+        
+        var eventData = {
+            title: $(this).data("title"),
+            organizer: $(this).data("organizer"),
+            startDate: $(this).data("start-date"),
+            endDate: $(this).data("end-date"),
+            availableSlots: $(this).data("available-slots"),
+            capacity: $(this).data("capacity"),
+            status: $(this).data("status"),
+            description: $(this).data("description"),
+            image: $(this).data("image"),
+        };
 
-    console.log("Evento seleccionado:", eventData);
+        console.log("Evento seleccionado:", eventData);
 
-    // Mostrar en el modal
-    $("#eventModalTitle").text(eventData.title);
-    $("#eventModalOrganizer").text(eventData.organizer);
-    $("#eventModalStartDate").text(eventData.startDate);
-    $("#eventModalEndDate").text(eventData.endDate);
-    $("#eventModalAvailableSlots").text(eventData.availableSlots);
-    $("#eventModalCapacity").text(eventData.capacity);
-    $("#eventModalStatus").text(eventData.status);
-    $("#eventModalDescription").text(eventData.description);
-    $("#eventModalImage").attr("src", eventData.image);
+        // Mostrar en el modal
+        $("#eventModalTitle").text(eventData.title);
+        $("#eventModalOrganizer").text(eventData.organizer);
+        $("#eventModalStartDate").text(eventData.startDate);
+        $("#eventModalEndDate").text(eventData.endDate);
+        $("#eventModalAvailableSlots").text(eventData.availableSlots);
+        $("#eventModalCapacity").text(eventData.capacity);
+        $("#eventModalStatus").text(eventData.status);
+        $("#eventModalDescription").text(eventData.description);
+        $("#eventModalImage").attr("src", eventData.image);
 
-    $("#viewEventModal").modal("show");
-});
+        $("#viewEventModal").modal("show");
+    });
 });
