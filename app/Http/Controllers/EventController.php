@@ -166,7 +166,7 @@ class EventController extends Controller
 
         // Asignar al organizador como asistente en la tabla intermedia después de guardar
         $event->attendees()->attach($request->organizer_id);
-        $event->available_slots -= 1; // Reducir el número de espacios disponibles
+        //$event->available_slots -= 1; // el organizador ocupa un espacio disponible??
 
         return response()->json(['status' => true, 'message' => 'Evento creado exitosamente', 'data' => $event]);
     }
@@ -462,7 +462,11 @@ class EventController extends Controller
                 $event->available_slots,
                 $event->capacity,
                 $event->status,
-                '<button class="btn btn-danger deleteEvent" rel="' . $event->id . '">Delete</button>', // 7 (Acciones)
+                '<a href="#" class="btn btn-danger px-4 text-white deleteEvent d-flex align-items-center" rel=' . $event->id . ' data-tooltip="Delete Event">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6L18.72 20.58A2 2 0 0 1 16.72 22H7.28A2 2 0 0 1 5.28 20.58L5 6m5 4v6m4-6v6"></path></svg> Delete
+                     </a>', // 7 (Acciones)
             ];
         }
 
