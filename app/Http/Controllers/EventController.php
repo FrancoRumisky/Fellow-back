@@ -12,6 +12,7 @@ use App\Models\FollowingList;
 use App\Models\Images;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Models\GlobalFunction;
 
 class EventController extends Controller
 {
@@ -204,9 +205,29 @@ class EventController extends Controller
             return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
         }
 
-        Event::destroy($request->event_id);
+        $event = Event::find($request->event_id);
 
-        return response()->json(['status' => true, 'message' => 'Event deleted successfully']);
+        if (!$event) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Event not found',
+            ]);
+        }
+
+        // Eliminar la imagen del storage si existe
+        GlobalFunction::deleteFile($event->image);
+
+        //Eliminar Reporte si existe
+        $eventReport = Report::where('event_id', $request->event_id)->get();
+        $eventReport->each->delete();
+
+        // Eliminar el evento
+        $event->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Event deleted successfully',
+        ]);
     }
 
 
