@@ -7,7 +7,7 @@
 @section('content')
 <div class="card">
     <div class="card-header">
-        <h4>{{ __('app.Events') }}</h4>
+        <h4>{{ __('Events') }}</h4>
     </div>
     <div class="card-body">
         <table class="table table-striped w-100" id="eventsTable">
