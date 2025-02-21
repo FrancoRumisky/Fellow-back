@@ -437,7 +437,8 @@ class EventController extends Controller
         $data = [];
         foreach ($events as $event) {
             // 📌 Acceder a la relación correctamente
-            $organizerName = $event->organizer ? $event->organizer->full_name : 'Unknown';
+            $organizerName = $event->organizer ? $event->organizer->fullname : 'Unknown';
+
 
             $eventImage = $event->image ? asset('public/storage/' . $event->image) : asset('default-image.jpg');
 
