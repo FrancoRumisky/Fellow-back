@@ -477,4 +477,46 @@ class EventController extends Controller
             'data' => $data,
         ]);
     }
+
+    public function getUserEvents(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
+        }
+
+        $userId = $request->user_id;
+
+        // Obtener eventos donde el usuario es organizador
+        $organizedEvents = Event::where('organizer_id', $userId)
+            ->get()
+            ->map(function ($event) {
+                $event->is_organizer = true; // Agregar campo de prioridad
+                return $event;
+            });
+
+        // Obtener eventos donde el usuario es asistente
+        $attendedEvents = Event::whereIn('id', function ($query) use ($userId) {
+            $query->select('event_id')
+            ->from('event_attendees')
+            ->where('user_id', $userId);
+        })
+        ->where('organizer_id', '!=', $userId) // Evitar duplicados si es organizador
+        ->get()
+        ->map(function ($event) {
+            $event->is_organizer = false; // No es organizador
+            return $event;
+        });
+
+        // Combinar y ordenar eventos
+        $events = $organizedEvents->merge($attendedEvents)->sortByDesc('is_organizer');
+
+        return response()->json([
+            'status' => true,
+            'events' => $events->values(), // Resetear índices para JSON
+        ]);
+    }
 }
