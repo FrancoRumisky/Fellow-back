@@ -392,7 +392,9 @@ class EventController extends Controller
     public function eventsList(Request $request)
     {
         $totalData = Event::count();
-        $events = Event::orderBy('id', 'DESC')->get();
+
+        // 📌 Optimización: Cargar los organizadores directamente
+        $events = Event::with('organizer')->orderBy('id', 'DESC')->get();
 
         $columns = [
             0 => 'id',
@@ -412,13 +414,15 @@ class EventController extends Controller
         $totalFiltered = $totalData;
 
         if (empty($request->input('search.value'))) {
-            $events = Event::orderBy($order, $dir)
+            $events = Event::with('organizer')
+                ->orderBy($order, $dir)
                 ->offset($start)
                 ->limit($limit)
                 ->get();
         } else {
             $search = $request->input('search.value');
-            $events = Event::where('title', 'LIKE', "%{$search}%")
+            $events = Event::with('organizer')
+                ->where('title', 'LIKE', "%{$search}%")
                 ->orWhere('description', 'LIKE', "%{$search}%")
                 ->offset($start)
                 ->limit($limit)
@@ -432,27 +436,27 @@ class EventController extends Controller
 
         $data = [];
         foreach ($events as $event) {
-            $organizer = User::where('id', $event->organizer_id)->first();
-            $organizerName = $organizer ? $organizer->full_name : 'Unknown';
+            // 📌 Acceder a la relación correctamente
+            $organizerName = $event->organizer ? $event->organizer->full_name : 'Unknown';
 
             $eventImage = $event->image ? asset('public/storage/' . $event->image) : asset('default-image.jpg');
 
             $viewEvent = '<button type="button" class="btn btn-primary viewEvent commonViewBtn" 
-                        data-bs-toggle="modal" 
-                        data-title="' . htmlspecialchars($event->title, ENT_QUOTES) . '" 
-                        data-organizer="' . htmlspecialchars($organizerName, ENT_QUOTES) . '" 
-                        data-start-date="' . $event->start_date . '" 
-                        data-end-date="' . $event->end_date . '" 
-                        data-available-slots="' . $event->available_slots . '"
-                        data-capacity="' . $event->capacity . '"
-                        data-status="' . $event->status . '"
-                        data-description="' . htmlspecialchars($event->description, ENT_QUOTES) . '" 
-                        data-image="' . $eventImage . '" 
-                        rel="' . $event->id . '">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle></svg> View Event
-                     </button>';
+                    data-bs-toggle="modal" 
+                    data-title="' . htmlspecialchars($event->title, ENT_QUOTES) . '" 
+                    data-organizer="' . htmlspecialchars($organizerName, ENT_QUOTES) . '" 
+                    data-start-date="' . $event->start_date . '" 
+                    data-end-date="' . $event->end_date . '" 
+                    data-available-slots="' . $event->available_slots . '"
+                    data-capacity="' . $event->capacity . '"
+                    data-status="' . $event->status . '"
+                    data-description="' . htmlspecialchars($event->description, ENT_QUOTES) . '" 
+                    data-image="' . $eventImage . '" 
+                    rel="' . $event->id . '">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle></svg> View Event
+                 </button>';
 
             $data[] = [
                 $viewEvent,
@@ -463,10 +467,10 @@ class EventController extends Controller
                 $event->capacity,
                 $event->status,
                 '<a href="#" class="btn btn-danger px-4 text-white deleteEvent d-flex align-items-center" rel=' . $event->id . ' data-tooltip="Delete Event">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6L18.72 20.58A2 2 0 0 1 16.72 22H7.28A2 2 0 0 1 5.28 20.58L5 6m5 4v6m4-6v6"></path></svg> Delete
-                     </a>', // 7 (Acciones)
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6L18.72 20.58A2 2 0 0 1 16.72 22H7.28A2 2 0 0 1 5.28 20.58L5 6m5 4v6m4-6v6"></path></svg> Delete
+                 </a>', // 7 (Acciones)
             ];
         }
 
@@ -501,15 +505,15 @@ class EventController extends Controller
         // Obtener eventos donde el usuario es asistente
         $attendedEvents = Event::whereIn('id', function ($query) use ($userId) {
             $query->select('event_id')
-            ->from('event_attendees')
-            ->where('user_id', $userId);
+                ->from('event_attendees')
+                ->where('user_id', $userId);
         })
-        ->where('organizer_id', '!=', $userId) // Evitar duplicados si es organizador
-        ->get()
-        ->map(function ($event) {
-            $event->is_organizer = false; // No es organizador
-            return $event;
-        });
+            ->where('organizer_id', '!=', $userId) // Evitar duplicados si es organizador
+            ->get()
+            ->map(function ($event) {
+                $event->is_organizer = false; // No es organizador
+                return $event;
+            });
 
         // Combinar y ordenar eventos
         $events = $organizedEvents->merge($attendedEvents)->sortByDesc('is_organizer');
