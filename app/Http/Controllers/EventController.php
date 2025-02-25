@@ -180,39 +180,40 @@ class EventController extends Controller
             'description' => 'sometimes|string',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date',
-            'start_time' => 'sometimes|string',
-            'end_time' => 'sometimes|string',
+            'start_time' => 'sometimes',
+            'end_time' => 'sometimes',
             'location' => 'sometimes|string',
             'latitude' => 'sometimes|numeric',
             'longitude' => 'sometimes|numeric',
             'capacity' => 'sometimes|integer',
             'is_public' => 'sometimes|boolean',
-            'interests' => 'sometimes|string', // Intereses como string separado por comas
+            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'interests' => 'nullable|string' // Lista de IDs separados por comas
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
         }
 
-        $event = Event::findOrFail($request->event_id);
+        $event = Event::find($request->event_id);
 
-        // Actualizar solo los campos proporcionados en la solicitud
-        $event->update($request->only([
-            'title',
-            'description',
-            'start_date',
-            'end_date',
-            'start_time',
-            'end_time',
-            'location',
-            'latitude',
-            'longitude',
-            'capacity',
-            'is_public',
-            'interests'
-        ]));
+        // 🔹 Actualizar imagen solo si el usuario subió una nueva
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('events', 'public');
+            $event->image = $imagePath;
+        }
 
-        return response()->json(['status' => true, 'message' => 'Event updated successfully', 'data' => $event]);
+        // 🔹 Actualizar los datos del evento excepto la imagen
+        $event->fill($request->except(['image', 'interests']));
+        $event->save();
+
+        // 🔹 Manejo de intereses (reemplazar existentes)
+        if ($request->has('interests')) {
+            $interestsArray = explode(',', $request->interests); // Convertir string a array
+            $event->interests()->sync($interestsArray); // Reemplazar los intereses actuales
+        }
+
+        return response()->json(['status' => true, 'message' => 'Evento actualizado correctamente', 'data' => $event]);
     }
 
     // Eliminar un evento

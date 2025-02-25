@@ -12,6 +12,23 @@ class Event extends Model
     // Especificar la tabla asociada
     public $table = "events";
 
+    // Habilitar la asignación masiva para estos campos
+    protected $fillable = [
+        'title',
+        'description',
+        'start_date',
+        'end_date',
+        'start_time',
+        'end_time',
+        'location',
+        'latitude',
+        'longitude',
+        'capacity',
+        'is_public',
+        'organizer_id',
+        'interests'
+    ];
+
     // Definir las relaciones
 
     // Relación con el organizador (usuario que creó el evento)
