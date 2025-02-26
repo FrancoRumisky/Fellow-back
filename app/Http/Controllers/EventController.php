@@ -562,7 +562,7 @@ class EventController extends Controller
         // Obtener datos del request
         $eventId = $request->input('event_id');
         $userId = $request->input('user_id');
-        $rating = $request->input('rating');
+        $ratingValue = $request->input('rating');
 
         // Verificar si el usuario es asistente del evento
         $event = Event::find($eventId);
@@ -572,18 +572,23 @@ class EventController extends Controller
             return response()->json(['status' => false, 'message' => 'No puedes calificar un evento en el que no participaste.']);
         }
 
-        // Insertar o actualizar la calificación del usuario para el evento
+        // Guardar o actualizar la calificación del usuario en la tabla `event_ratings`
         EventRating::updateOrCreate(
             ['event_id' => $eventId, 'user_id' => $userId],
-            ['rating' => $rating]
+            ['rating' => $ratingValue]
         );
 
         // Calcular el nuevo promedio de calificaciones
-        $newAverage = EventRating::where('event_id', $eventId)->avg('rating');
+        $averageRating = EventRating::where('event_id', $eventId)->avg('rating');
 
-        // Actualizar el campo `rating` en la tabla `events`
-        $event->update(['rating' => $newAverage]);
+        // Actualizar el campo rating en la tabla `events`
+        $event->rating = round($averageRating, 1);
+        $event->save();
 
-        return response()->json(['status' => true, 'message' => 'Calificación registrada con éxito.', 'new_rating' => $newAverage]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Calificación registrada con éxito.',
+            'new_rating' => round($averageRating, 1),
+        ]);
     }
 }
