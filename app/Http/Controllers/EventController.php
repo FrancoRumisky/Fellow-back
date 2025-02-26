@@ -581,6 +581,9 @@ class EventController extends Controller
         // Calcular el nuevo promedio de calificaciones
         $averageRating = EventRating::where('event_id', $eventId)->avg('rating');
 
+        // Contar la cantidad de usuarios que han calificado el evento
+        $ratingCount = EventRating::where('event_id', $eventId)->count();
+
         // Actualizar el campo rating en la tabla `events`
         $event->rating = round($averageRating, 1);
         $event->save();
@@ -589,6 +592,7 @@ class EventController extends Controller
             'status' => true,
             'message' => 'Calificación registrada con éxito.',
             'new_rating' => round($averageRating, 1),
+            'rating_count' => $ratingCount,
         ]);
     }
 }
