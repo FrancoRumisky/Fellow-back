@@ -129,5 +129,6 @@ Route::post('joinEvent', [EventController::class, 'joinEvent'])->middleware('che
 Route::post('getEventAttendees', [EventController::class, 'getEventAttendees'])->middleware('checkHeader');
 Route::post('leaveEvent', [EventController::class, 'leaveEvent'])->middleware('checkHeader');
 Route::post('getUserEvents', [EventController::class, 'getUserEvents'])->middleware('checkHeader');
+Route::post('rateEvent', [EventController::class, 'rateEvent'])->middleware('checkHeader');
 
 Route::get('markExpiredEvents', [EventController::class, 'markExpiredEvents'])->middleware('checkHeader');

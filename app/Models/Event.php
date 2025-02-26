@@ -46,6 +46,6 @@ class Event extends Model
     // Relación con reseñas o calificaciones
     public function reviews()
     {
-        return $this->hasMany(EventReview::class, 'event_id', 'id');
+        return $this->hasMany(EventRating::class, 'event_id', 'id');
     }
 }

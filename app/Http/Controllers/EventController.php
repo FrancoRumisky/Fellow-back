@@ -13,6 +13,7 @@ use App\Models\Images;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Models\GlobalFunction;
+use App\Models\EventRating;
 
 class EventController extends Controller
 {
@@ -544,5 +545,45 @@ class EventController extends Controller
             'status' => true,
             'events' => $events->values(), // Resetear índices para JSON
         ]);
+    }
+
+    public function rateEvent(Request $request)
+    {
+        // Validar datos recibidos
+        $validator = Validator::make($request->all(), [
+            'event_id' => 'required|integer|exists:events,id',
+            'rating' => 'required|numeric|min:0|max:10',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
+        }
+
+        // Obtener datos del request
+        $eventId = $request->input('event_id');
+        $userId = $request->input('user_id');
+        $rating = $request->input('rating');
+
+        // Verificar si el usuario es asistente del evento
+        $event = Event::find($eventId);
+        $isAttendee = $event->attendees()->where('user_id', $userId)->exists();
+
+        if (!$isAttendee) {
+            return response()->json(['status' => false, 'message' => 'No puedes calificar un evento en el que no participaste.']);
+        }
+
+        // Insertar o actualizar la calificación del usuario para el evento
+        EventRating::updateOrCreate(
+            ['event_id' => $eventId, 'user_id' => $userId],
+            ['rating' => $rating]
+        );
+
+        // Calcular el nuevo promedio de calificaciones
+        $newAverage = EventRating::where('event_id', $eventId)->avg('rating');
+
+        // Actualizar el campo `rating` en la tabla `events`
+        $event->update(['rating' => $newAverage]);
+
+        return response()->json(['status' => true, 'message' => 'Calificación registrada con éxito.', 'new_rating' => $newAverage]);
     }
 }
