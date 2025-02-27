@@ -14,6 +14,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Models\GlobalFunction;
 use App\Models\EventRating;
+use App\Models\UserNotification;
+use App\Models\Myfunction;
+use App\Models\Constants;
+use App\Models\EventRequest;
 
 class EventController extends Controller
 {
@@ -595,4 +599,133 @@ class EventController extends Controller
             'rating_count' => $ratingCount,
         ]);
     }
+
+    public function requestJoinEvent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:users,id',
+            'event_id' => 'required|integer|exists:events,id',
+        ]);
+
+        if ($validator->fails()) {
+            $messages = $validator->errors()->all();
+            return response()->json(['status' => false, 'message' => $messages[0]]);
+        }
+
+        $user = User::where('is_block', 0)->where('id', $request->user_id)->first();
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Usuario no encontrado o bloqueado.']);
+        }
+
+        $event = Event::where('id', $request->event_id)->first();
+        if (!$event) {
+            return response()->json(['status' => false, 'message' => 'Evento no encontrado.']);
+        }
+
+        // Verificar si el usuario ya es asistente del evento
+        if ($event->attendees()->where('user_id', $request->user_id)->exists()) {
+            return response()->json(['status' => false, 'message' => 'Ya eres parte de este evento.']);
+        }
+
+        // Verificar si ya existe una solicitud pendiente
+        $existingRequest = EventRequest::where('user_id', $request->user_id)
+            ->where('event_id', $request->event_id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingRequest) {
+            return response()->json(['status' => false, 'message' => 'Ya has solicitado unirte a este evento.']);
+        }
+
+        // Guardar la solicitud en la tabla `event_requests`
+        $requestEntry = new EventRequest();
+        $requestEntry->user_id = (int) $request->user_id;
+        $requestEntry->event_id = (int) $request->event_id;
+        $requestEntry->status = 'pending';
+        $requestEntry->save();
+
+        // Enviar notificación al organizador
+        $organizer = User::find($event->organizer_id);
+        if ($organizer && $organizer->is_notification == 1) {
+            $notificationMessage = "{$user->fullname} ha solicitado unirse a tu evento '{$event->title}'.";
+            Myfunction::sendPushToUser("Solicitud de Unión", $notificationMessage, $organizer->device_token);
+        }
+
+        // Guardar la notificación en la base de datos
+        $notification = new UserNotification();
+        $notification->my_user_id = (int) $request->user_id;
+        $notification->user_id = (int) $event->organizer_id;
+        $notification->item_id = (int) $request->event_id;
+        $notification->type = Constants::notificationTypeJoinRequest;
+        $notification->message = "Solicitud de unión al evento '{$event->title}'.";
+        $notification->save();
+
+        return response()->json(['status' => true, 'message' => 'Solicitud enviada al organizador.']);
+    }
+
+    public function handleJoinRequest(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer|exists:users,id',
+            'event_id' => 'required|integer|exists:events,id',
+            'status' => 'required|in:approved,rejected',
+        ]);
+
+        if ($validator->fails()) {
+            $messages = $validator->errors()->all();
+            return response()->json(['status' => false, 'message' => $messages[0]]);
+        }
+
+        $organizer = User::where('is_block', 0)->where('id', $request->user_id)->first();
+        if (!$organizer) {
+            return response()->json(['status' => false, 'message' => 'Usuario no encontrado o bloqueado.']);
+        }
+
+        $event = Event::where('id', $request->event_id)->first();
+        if (!$event) {
+            return response()->json(['status' => false, 'message' => 'Evento no encontrado.']);
+        }
+
+        // Verificar que el usuario que aprueba/rechaza es el organizador del evento
+        if ($event->organizer_id != $request->user_id) {
+            return response()->json(['status' => false, 'message' => 'No tienes permiso para realizar esta acción.']);
+        }
+
+        $joinRequest = EventRequest::where('event_id', $request->event_id)
+            ->where('user_id', $request->user_id)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$joinRequest) {
+            return response()->json(['status' => false, 'message' => 'No hay solicitud pendiente para este usuario.']);
+        }
+
+        // Actualizar la solicitud con el nuevo estado
+        $joinRequest->status = $request->status;
+        $joinRequest->save();
+
+        if ($request->status === 'approved') {
+            // Agregar al usuario como asistente
+            $event->attendees()->attach($request->user_id);
+        }
+
+        // Notificar al usuario solicitante
+        $user = User::find($request->user_id);
+        if ($user && $user->is_notification == 1) {
+            $notificationMessage = "Tu solicitud para unirte al evento '{$event->title}' ha sido {$request->status}.";
+            Myfunction::sendPushToUser("Respuesta de Unión", $notificationMessage, $user->device_token);
+        }
+
+        // Guardar notificación en la base de datos
+        $notification = new UserNotification();
+        $notification->my_user_id = (int) $event->organizer_id;
+        $notification->user_id = (int) $request->user_id;
+        $notification->item_id = (int) $request->event_id;
+        $notification->type = Constants::notificationTypeJoinResponse;
+        $notification->message = "Tu solicitud para unirte al evento '{$event->title}' ha sido {$request->status}.";
+        $notification->save();
+
+        return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
+    }
+
 }

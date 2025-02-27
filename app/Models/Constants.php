@@ -13,4 +13,6 @@ final class Constants
     const notificationTypeComment = 2;
     const notificationTypeLike = 3;
     const notificationTypeLikeProfile = 4;
+    const notificationTypeJoinRequest = 5; 
+    const notificationTypeJoinResponse = 6;
 }
