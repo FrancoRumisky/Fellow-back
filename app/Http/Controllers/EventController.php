@@ -665,31 +665,34 @@ class EventController extends Controller
     public function handleJoinRequest(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'organizer_id' => 'required|integer|exists:users,id',
             'user_id' => 'required|integer|exists:users,id',
             'event_id' => 'required|integer|exists:events,id',
             'status' => 'required|in:approved,rejected',
         ]);
 
         if ($validator->fails()) {
-            $messages = $validator->errors()->all();
-            return response()->json(['status' => false, 'message' => $messages[0]]);
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
         }
 
-        $organizer = User::where('is_block', 0)->where('id', $request->user_id)->first();
+        // Verificar que el organizador existe y no está bloqueado
+        $organizer = User::where('is_block', 0)->where('id', $request->organizer_id)->first();
         if (!$organizer) {
-            return response()->json(['status' => false, 'message' => 'Usuario no encontrado o bloqueado.']);
+            return response()->json(['status' => false, 'message' => 'Organizador no encontrado o bloqueado.']);
         }
 
+        // Verificar que el evento existe
         $event = Event::where('id', $request->event_id)->first();
         if (!$event) {
             return response()->json(['status' => false, 'message' => 'Evento no encontrado.']);
         }
 
-        // Verificar que el usuario que aprueba/rechaza es el organizador del evento
-        if ($event->organizer_id != $request->user_id) {
+        // Verificar que quien responde la solicitud es el organizador del evento
+        if ($event->organizer_id != $request->organizer_id) {
             return response()->json(['status' => false, 'message' => 'No tienes permiso para realizar esta acción.']);
         }
 
+        // Buscar la solicitud pendiente del usuario
         $joinRequest = EventRequest::where('event_id', $request->event_id)
             ->where('user_id', $request->user_id)
             ->where('status', 'pending')
@@ -699,14 +702,17 @@ class EventController extends Controller
             return response()->json(['status' => false, 'message' => 'No hay solicitud pendiente para este usuario.']);
         }
 
-        // Actualizar la solicitud con el nuevo estado
-        $joinRequest->status = $request->status;
-        $joinRequest->save();
-
+        // Si se aprueba, añadir al usuario como asistente
         if ($request->status === 'approved') {
-            // Agregar al usuario como asistente
-            $event->attendees()->attach($request->user_id);
+            // Verificar que el usuario no esté ya en la lista de asistentes
+            $alreadyJoined = $event->attendees()->where('user_id', $request->user_id)->exists();
+            if (!$alreadyJoined) {
+                $event->attendees()->attach($request->user_id);
+            }
         }
+
+        // Eliminar la solicitud de la base de datos
+        $joinRequest->delete();
 
         // Notificar al usuario solicitante
         $user = User::find($request->user_id);
