@@ -647,7 +647,7 @@ class EventController extends Controller
         // Enviar notificación al organizador
         $organizer = User::find($event->organizer_id);
         if ($organizer && $organizer->is_notification == 1) {
-            $notificationMessage = "{$user->fullname} ha solicitado unirse a tu evento '{$event->title}'.";
+            $notificationMessage = "{$user->fullname} has requested to join your event '{$event->title}'.";
             Myfunction::sendPushToUser("Solicitud de Unión", $notificationMessage, $organizer->device_token);
         }
 
@@ -717,8 +717,8 @@ class EventController extends Controller
         // Notificar al usuario solicitante
         $user = User::find($request->user_id);
         if ($user && $user->is_notification == 1) {
-            $notificationMessage = "Tu solicitud para unirte al evento '{$event->title}' ha sido {$request->status}.";
-            Myfunction::sendPushToUser("Respuesta de Unión", $notificationMessage, $user->device_token);
+            $notificationMessage = "Your request to join the event '{$event->title}' has been {$request->status}.";
+            Myfunction::sendPushToUser("Union Response", $notificationMessage, $user->device_token);
         }
 
         // Guardar notificación en la base de datos
