@@ -657,7 +657,6 @@ class EventController extends Controller
         $notification->user_id = (int) $event->organizer_id;
         $notification->item_id = (int) $request->event_id;
         $notification->type = Constants::notificationTypeJoinRequest;
-        $notification->message = "Solicitud de unión al evento '{$event->title}'.";
         $notification->save();
 
         return response()->json(['status' => true, 'message' => 'Solicitud enviada al organizador.']);
@@ -722,7 +721,6 @@ class EventController extends Controller
         $notification->user_id = (int) $request->user_id;
         $notification->item_id = (int) $request->event_id;
         $notification->type = Constants::notificationTypeJoinResponse;
-        $notification->message = "Tu solicitud para unirte al evento '{$event->title}' ha sido {$request->status}.";
         $notification->save();
 
         return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
