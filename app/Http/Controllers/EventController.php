@@ -641,6 +641,7 @@ class EventController extends Controller
         $requestEntry = new EventRequest();
         $requestEntry->user_id = (int) $request->user_id;
         $requestEntry->event_id = (int) $request->event_id;
+        $requestEntry->organizer_id = (int) $event->organizer_id;
         $requestEntry->status = 'pending';
         $requestEntry->save();
 

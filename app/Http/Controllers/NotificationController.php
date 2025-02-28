@@ -251,7 +251,7 @@ class NotificationController extends Controller
             ->with('user.images')
             ->leftJoin('event_requests', function ($join) {
                 $join->on('user_notification.item_id', '=', 'event_requests.event_id')
-                ->on('user_notification.user_id', '=', 'event_requests.user_id');
+                ->on('user_notification.user_id', '=', 'event_requests.organizer_id');
             })
             ->select('user_notification.*', 'event_requests.status as request_status')
             ->where('user_notification.user_id', $req->user_id) 
