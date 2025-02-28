@@ -664,21 +664,19 @@ class EventController extends Controller
             Myfunction::sendPushToUser("Solicitud de Unión", $notificationMessage, $organizer->device_token);
         }
 
-        // ✅ Comprobar si ya existe la notificación de tipo JoinResponse
-        $existingNotification = UserNotification::where('item_id', $request->event_id)
-            ->where('user_id', $request->user_id)
+        // Siempre eliminar la notificación previa para el organizador al crear una nueva solicitud
+        UserNotification::where('item_id', $request->event_id)
+            ->where('user_id', $event->organizer_id)
             ->where('type', Constants::notificationTypeJoinRequest)
-            ->exists();
+            ->delete();
 
-        if (!$existingNotification) {
-            // ✅ Solo crear la notificación si no existe
-            $notification = new UserNotification();
-            $notification->my_user_id = (int) $request->user_id;
-            $notification->user_id = (int) $event->organizer_id;
-            $notification->item_id = (int) $request->event_id;
-            $notification->type = Constants::notificationTypeJoinRequest;
-            $notification->save();
-        }
+        // Crear siempre la notificación nueva
+        $notification = new UserNotification();
+        $notification->my_user_id = (int) $request->user_id;  // Quien solicita unirse
+        $notification->user_id = (int) $event->organizer_id;  // Quien recibe la notificación (organizador)
+        $notification->item_id = (int) $request->event_id;
+        $notification->type = Constants::notificationTypeJoinRequest;
+        $notification->save();
 
         return response()->json(['status' => true, 'message' => 'Solicitud enviada al organizador.']);
     }
@@ -744,21 +742,20 @@ class EventController extends Controller
             Myfunction::sendPushToUser("Union Response", $notificationMessage, $user->device_token);
         }
 
-        // ✅ Comprobar si ya existe la notificación de tipo JoinResponse
-        $existingNotification = UserNotification::where('item_id', $request->event_id)
+        // ✅ Eliminar cualquier notificación previa del mismo evento y usuario
+        UserNotification::where('item_id', $request->event_id)
             ->where('user_id', $request->user_id)
             ->where('type', Constants::notificationTypeJoinResponse)
-            ->exists();
+            ->delete();
 
-        if (!$existingNotification) {
-            // ✅ Solo crear la notificación si no existe
-            $notification = new UserNotification();
-            $notification->my_user_id = (int) $event->organizer_id;
-            $notification->user_id = (int) $request->user_id;
-            $notification->item_id = (int) $request->event_id;
-            $notification->type = Constants::notificationTypeJoinResponse;
-            $notification->save();
-        }
+        // ✅ Crear siempre una nueva notificación actualizada
+        $notification = new UserNotification();
+        $notification->my_user_id = (int) $event->organizer_id;
+        $notification->user_id = (int) $request->user_id;
+        $notification->item_id = (int) $request->event_id;
+        $notification->type = Constants::notificationTypeJoinResponse;
+        $notification->save();
+
         return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
     }
 }
