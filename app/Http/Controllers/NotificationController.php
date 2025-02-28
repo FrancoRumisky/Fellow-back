@@ -251,7 +251,7 @@ class NotificationController extends Controller
             ->leftJoin('event_requests', function ($join) {
                 $join->on('user_notification.item_id', '=', 'event_requests.event_id')
                     ->where(function ($query) {
-                        $query->whereColumn('user_notification.my_user_id', '=', 'event_requests.user_id')
+                        $query->whereColumn('user_notification.user_id', '=', 'event_requests.user_id')
                             ->orWhereColumn('user_notification.user_id', '=', 'event_requests.organizer_id');
                     });
             })
