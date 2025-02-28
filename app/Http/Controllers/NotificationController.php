@@ -231,7 +231,7 @@ class NotificationController extends Controller
         ]);
     }
 
-    function getUserNotifications(Request $req)
+    public function getUserNotifications(Request $req)
     {
         $rules = [
             'user_id' => 'required',
@@ -246,27 +246,32 @@ class NotificationController extends Controller
             return response()->json(['status' => false, 'message' => $msg]);
         }
 
-        $result =  UserNotification::Where('user_id', $req->user_id)
-                                    ->with('user')
-                                    ->with('user.images')
-                                    ->offset($req->start)
-                                    ->limit($req->count)
-                                    ->orderBy('id', 'DESC')
-                                    ->get();
+        // Hacer la consulta con join para traer el status de event_requests
+        $notifications = UserNotification::where('user_id', $req->user_id)
+            ->with('user')
+            ->with('user.images')
+            ->leftJoin('event_requests', function ($join) {
+                $join->on('user_notification.item_id', '=', 'event_requests.event_id')
+                ->on('user_notification.user_id', '=', 'event_requests.user_id');
+            })
+            ->select('user_notification.*', 'event_requests.status as request_status')
+            ->offset($req->start)
+            ->limit($req->count)
+            ->orderBy('user_notification.id', 'DESC')
+            ->get();
 
-
-        if ($result->isEmpty()) {
+        if ($notifications->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'message' => 'No data found',
-                'data' => $result
+                'data' => [],
             ]);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'data get successfully',
-            'data' => $result
+            'message' => 'Data retrieved successfully',
+            'data' => $notifications,
         ]);
     }
 }

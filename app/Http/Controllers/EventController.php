@@ -702,6 +702,10 @@ class EventController extends Controller
             return response()->json(['status' => false, 'message' => 'No hay solicitud pendiente para este usuario.']);
         }
 
+        // Actualizar el estado de la solicitud
+        $joinRequest->status = $request->status;
+        $joinRequest->save();
+
         // Si se aprueba, añadir al usuario como asistente
         if ($request->status === 'approved') {
             // Verificar que el usuario no esté ya en la lista de asistentes
@@ -711,8 +715,6 @@ class EventController extends Controller
             }
         }
 
-        // Eliminar la solicitud de la base de datos
-        $joinRequest->delete();
 
         // Notificar al usuario solicitante
         $user = User::find($request->user_id);
