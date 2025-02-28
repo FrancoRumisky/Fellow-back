@@ -371,8 +371,8 @@ class EventController extends Controller
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
         }
-
-        $event = Event::find($request->event_id);
+        $eventId = $request->event_id;
+        $event = Event::find($eventId);
         $userId = $request->user_id;
 
         // Verificar si el usuario está registrado como asistente del evento
@@ -393,8 +393,9 @@ class EventController extends Controller
         $event->save();
 
         EventRequest::where('user_id', $userId)
-        ->where('event_id', $request->event_id)
-        ->update(['status' => 'cancelled']);
+            ->where('event_id', $eventId)
+            ->where('status', 'approved') // Solo las solicitudes aprobadas
+            ->update(['status' => 'cancelled']);
 
         return response()->json(['status' => true, 'message' => 'Has salido del evento con éxito']);
     }
@@ -633,8 +634,8 @@ class EventController extends Controller
 
         // Verificar si ya existe una solicitud pendiente
         $existingRequest = EventRequest::where('user_id', $request->user_id)
-        ->where('event_id', $request->event_id)
-        ->first();
+            ->where('event_id', $request->event_id)
+            ->first();
 
         if ($existingRequest) {
             if ($existingRequest->status === 'pending') {
@@ -745,5 +746,4 @@ class EventController extends Controller
 
         return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
     }
-
 }
