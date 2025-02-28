@@ -392,6 +392,10 @@ class EventController extends Controller
         $event->available_slots += 1;
         $event->save();
 
+        EventRequest::where('user_id', $userId)
+        ->where('event_id', $request->event_id)
+        ->update(['status' => 'cancelled']);
+
         return response()->json(['status' => true, 'message' => 'Has salido del evento con éxito']);
     }
 
@@ -629,21 +633,28 @@ class EventController extends Controller
 
         // Verificar si ya existe una solicitud pendiente
         $existingRequest = EventRequest::where('user_id', $request->user_id)
-            ->where('event_id', $request->event_id)
-            ->where('status', 'pending')
-            ->first();
+        ->where('event_id', $request->event_id)
+        ->first();
 
         if ($existingRequest) {
-            return response()->json(['status' => false, 'message' => 'Ya has solicitado unirte a este evento.']);
+            if ($existingRequest->status === 'pending') {
+                return response()->json(['status' => false, 'message' => 'Ya has solicitado unirte a este evento.']);
+            } elseif ($existingRequest->status === 'approved') {
+                return response()->json(['status' => false, 'message' => 'Ya formas parte de este evento.']);
+            } elseif ($existingRequest->status === 'cancelled' || $existingRequest->status === 'rejected') {
+                // Crear nueva solicitud si hay una previa rechazada/cancelada
+                $existingRequest->delete(); // Eliminar solicitud anterior
+            }
         }
 
-        // Guardar la solicitud en la tabla `event_requests`
+        // Crear nueva solicitud
         $requestEntry = new EventRequest();
         $requestEntry->user_id = (int) $request->user_id;
+        $requestEntry->organizer_id = (int) $event->organizer_id;  // Agregar el organizador
         $requestEntry->event_id = (int) $request->event_id;
-        $requestEntry->organizer_id = (int) $event->organizer_id;
         $requestEntry->status = 'pending';
         $requestEntry->save();
+
 
         // Enviar notificación al organizador
         $organizer = User::find($event->organizer_id);
