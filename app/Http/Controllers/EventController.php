@@ -673,8 +673,8 @@ class EventController extends Controller
         if (!$existingNotification) {
             // ✅ Solo crear la notificación si no existe
             $notification = new UserNotification();
-            $notification->my_user_id = (int) $event->organizer_id;
-            $notification->user_id = (int) $request->user_id;
+            $notification->my_user_id = (int) $request->user_id;
+            $notification->user_id = (int) $event->organizer_id;
             $notification->item_id = (int) $request->event_id;
             $notification->type = Constants::notificationTypeJoinRequest;
             $notification->save();
