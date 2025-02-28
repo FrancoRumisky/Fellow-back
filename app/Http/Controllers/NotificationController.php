@@ -26,7 +26,7 @@ class NotificationController extends Controller
         $contents = File::get(base_path('googleCredentials.json'));
         $json = json_decode(json: $contents, associative: true);
 
-        $url = 'https://fcm.googleapis.com/v1/projects/'.$json['project_id'].'/messages:send';
+        $url = 'https://fcm.googleapis.com/v1/projects/' . $json['project_id'] . '/messages:send';
         // $notificationArray = array('title' => $title, 'body' => $message);
 
         // $device_token = $user->device_token;
@@ -62,7 +62,7 @@ class NotificationController extends Controller
         curl_close($ch);
 
         // return $response;
-        return response()->json(['result'=> $result, 'fields'=> $fields]);
+        return response()->json(['result' => $result, 'fields' => $fields]);
     }
 
     function notifications(Request $req)
@@ -110,14 +110,13 @@ class NotificationController extends Controller
 
         $title = $request->title;
         $message  = $request->message;
-      
+
         GlobalFunction::sendPushNotificationToAllUsers($title, $message);
 
         return response()->json([
             'status' => true,
             'message' => 'Notification Send Successfully',
         ]);
-     
     }
 
     public function repeatNotification(Request $request)
@@ -128,9 +127,9 @@ class NotificationController extends Controller
         GlobalFunction::sendPushNotificationToAllUsers($title, $message);
 
         return response()->json([
-                'status' => true,
-                'message' => 'Notification Repeat Successfully',
-            ]);
+            'status' => true,
+            'message' => 'Notification Repeat Successfully',
+        ]);
     }
 
     function fetchAllNotification(Request $request)
@@ -178,7 +177,7 @@ class NotificationController extends Controller
             $delete = '<a rel="' . $item->id . '" class="btn btn-danger delete text-white"> ' . __('Delete') . ' </a>';
             $action = '<span class="float-end">' . $repeat . $edit . $delete . ' </span>';
 
- 
+
 
             $data[] = array(
                 $item->title,
@@ -211,9 +210,9 @@ class NotificationController extends Controller
         }
 
         $result =  AdminNotification::offset($req->start)
-                                    ->limit($req->count)
-                                    ->orderBy('id', 'DESC')
-                                    ->get();
+            ->limit($req->count)
+            ->orderBy('id', 'DESC')
+            ->get();
 
 
         if ($result->isEmpty()) {
@@ -251,10 +250,13 @@ class NotificationController extends Controller
             ->with('user.images')
             ->leftJoin('event_requests', function ($join) {
                 $join->on('user_notification.item_id', '=', 'event_requests.event_id')
-                ->on('user_notification.user_id', '=', 'event_requests.organizer_id');
+                    ->where(function ($query) {
+                        $query->whereColumn('user_notification.my_user_id', '=', 'event_requests.user_id')
+                            ->orWhereColumn('user_notification.user_id', '=', 'event_requests.organizer_id');
+                    });
             })
             ->select('user_notification.*', 'event_requests.status as request_status')
-            ->where('user_notification.user_id', $req->user_id) 
+            ->where('user_notification.user_id', $req->user_id)
             ->offset($req->start)
             ->limit($req->count)
             ->orderBy('user_notification.id', 'DESC')
