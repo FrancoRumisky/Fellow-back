@@ -666,9 +666,9 @@ class EventController extends Controller
 
         // ✅ Comprobar si ya existe la notificación de tipo JoinResponse
         $existingNotification = UserNotification::where('item_id', $request->event_id)
-        ->where('user_id', $request->user_id)
-        ->where('type', Constants::notificationTypeJoinResponse)
-        ->exists();
+            ->where('user_id', $request->user_id)
+            ->where('type', Constants::notificationTypeJoinRequest)
+            ->exists();
 
         if (!$existingNotification) {
             // ✅ Solo crear la notificación si no existe
@@ -746,9 +746,9 @@ class EventController extends Controller
 
         // ✅ Comprobar si ya existe la notificación de tipo JoinResponse
         $existingNotification = UserNotification::where('item_id', $request->event_id)
-        ->where('user_id', $request->user_id)
-        ->where('type', Constants::notificationTypeJoinResponse)
-        ->exists();
+            ->where('user_id', $request->user_id)
+            ->where('type', Constants::notificationTypeJoinResponse)
+            ->exists();
 
         if (!$existingNotification) {
             // ✅ Solo crear la notificación si no existe
