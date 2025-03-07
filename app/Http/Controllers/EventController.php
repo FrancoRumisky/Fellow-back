@@ -132,6 +132,7 @@ class EventController extends Controller
             'is_public' => 'required|boolean',
             'organizer_id' => 'required|integer|exists:users,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Imagen opcional
+            'video' => 'nullable|file|mimes:mp4,mov,avi,webm|max:102400', // Video opcional (100MB máximo, puedes ajustar)
             'interests' => 'nullable|string', // IDs de intereses separados por comas
         ]);
 
@@ -144,6 +145,12 @@ class EventController extends Controller
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('events', 'public'); // Guardar imagen en almacenamiento público
+        }
+
+        // Manejar el video si se proporciona
+        $videoPath = null;
+        if ($request->hasFile('video')) {
+            $videoPath = $request->file('video')->store('events', 'public');
         }
 
         // Crear el evento
@@ -163,6 +170,7 @@ class EventController extends Controller
         $event->organizer_id = $request->organizer_id;
         $event->available_slots = $request->capacity; // Inicialmente los espacios disponibles son iguales a la capacidad
         $event->image = $imagePath; // Asignar la ruta de la imagen si existe
+        $event->video = $videoPath; // Guardar video si existe
         $event->interests = $request->interests; // Guardar los intereses relacionados
 
 
