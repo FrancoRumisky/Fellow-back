@@ -251,6 +251,9 @@ class EventController extends Controller
         // Eliminar la imagen del storage si existe
         GlobalFunction::deleteFile($event->image);
 
+        //Elimina el video del stotage si existe
+        GlobalFunction::deleteFile($event->video);
+
         //Eliminar Reporte si existe
         $eventReport = Report::where('event_id', $request->event_id)->get();
         $eventReport->each->delete();
