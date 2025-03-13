@@ -410,49 +410,33 @@ class EventController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => $validator->errors()->first()
-            ]);
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
         }
 
         // Obtener los parámetros
         $eventId = $request->input('event_id');
         $userId  = $request->input('user_id');
 
-        // Buscar el evento con los asistentes y sus imágenes
-        $event = Event::with(['attendees.images'])->find($eventId);
+        // Buscar el evento y cargar asistentes con sus imágenes
+        $event = Event::with('attendees.images')->find($eventId);
 
         if (!$event) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Evento no encontrado'
-            ]);
+            return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
         }
 
-        // Procesar los asistentes con `is_followed` y `profile_image`
+        // Agregar el campo `is_followed` a cada asistente
         $attendees = $event->attendees->map(function ($user) use ($userId) {
             $isFollowed = FollowingList::where('my_user_id', $userId)
                 ->where('user_id', $user->id)
                 ->exists();
 
-            // Obtener la primera imagen del asistente si tiene varias
-            $profileImage = $user->images->first()->image ?? '';
-
-            return [
-                'id'            => $user->id,
-                'name'          => $user->name,
-                'profile_image' => $profileImage,
-                'is_followed'   => $isFollowed,
-            ];
+            // Agregamos `is_followed` al usuario sin modificar la estructura base
+            $user->is_followed = $isFollowed;
+            return $user;
         });
 
-        return response()->json([
-            'status' => true,
-            'data' => $attendees
-        ]);
+        return response()->json(['status' => true, 'data' => $attendees]);
     }
-
 
     public function leaveEvent(Request $request)
     {
