@@ -406,48 +406,51 @@ class EventController extends Controller
         // Validar los datos recibidos
         $validator = Validator::make($request->all(), [
             'event_id' => 'required|integer|exists:events,id',
-            'user_id' => 'required|integer|exists:users,id',
+            'user_id'  => 'required|integer|exists:users,id',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ]);
         }
 
         // Obtener los parámetros
         $eventId = $request->input('event_id');
-        $userId = $request->input('user_id');
+        $userId  = $request->input('user_id');
 
-        // Buscar el evento con asistentes y sus imágenes
-        $event = Event::with('attendees')->find($eventId);
+        // Buscar el evento con los asistentes y sus imágenes
+        $event = Event::with(['attendees.images'])->find($eventId);
 
         if (!$event) {
-            return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
+            return response()->json([
+                'status' => false,
+                'message' => 'Evento no encontrado'
+            ]);
         }
 
-        // Verificar si la relación `attendees` está cargada correctamente
-        if ($event->attendees->isEmpty()) {
-            return response()->json(['status' => true, 'data' => []]);
-        }
-
-        // Procesar asistentes con `is_followed` e imágenes
+        // Procesar los asistentes con `is_followed` y `profile_image`
         $attendees = $event->attendees->map(function ($user) use ($userId) {
-            // Verificar si el usuario sigue a este asistente
             $isFollowed = FollowingList::where('my_user_id', $userId)
                 ->where('user_id', $user->id)
                 ->exists();
 
-            // Obtener la imagen de perfil del usuario
-            $profileImage = Images::where('user_id', $user->id)->pluck('image')->first();
+            // Obtener la primera imagen del asistente si tiene varias
+            $profileImage = $user->images->first()->image ?? '';
 
             return [
-                'id'            => $user->id ?? null,  // Evita errores si no tiene ID
-                'name'          => $user->name ?? 'Sin nombre',
-                'profile_image' => $profileImage ?? '', // Si no tiene imagen, devuelve ''
-                'is_followed'   => $isFollowed, // `true` si lo sigue, `false` si no
+                'id'            => $user->id,
+                'name'          => $user->name,
+                'profile_image' => $profileImage,
+                'is_followed'   => $isFollowed,
             ];
         });
 
-        return response()->json(['status' => true, 'data' => $attendees]);
+        return response()->json([
+            'status' => true,
+            'data' => $attendees
+        ]);
     }
 
 
