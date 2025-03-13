@@ -120,6 +120,8 @@ Route::post('storeFileGivePath', [SettingController::class, 'storeFileGivePath']
 Route::post('generateAgoraToken', [SettingController::class, 'generateAgoraToken'])->middleware('checkHeader');
 
 Route::post('getEvents', [EventController::class, 'getEvents'])->middleware('checkHeader');
+Route::post('getEventDetail', [EventController::class, 'getEventDetail'])->middleware('checkHeader');
+
 Route::post('createEvent', [EventController::class, 'createEvent'])->middleware('checkHeader');
 Route::post('updateEvent', [EventController::class, 'updateEvent'])->middleware('checkHeader');
 Route::post('deleteEvent', [EventController::class, 'deleteEvent'])->middleware('checkHeader');

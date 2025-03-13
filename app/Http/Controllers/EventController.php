@@ -113,6 +113,61 @@ class EventController extends Controller
         return $earthRadius * $c;
     }
 
+    //obtener evento por ID
+    public function getEventDetail(Request $request)
+    {
+        // Validar que se reciba el event_id y user_id (para el estado de "seguido")
+        $validator = Validator::make($request->all(), [
+            'event_id' => 'required|integer|exists:events,id',
+            'user_id'  => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first()
+            ]);
+        }
+
+        $eventId = $request->input('event_id');
+        $userId  = $request->input('user_id');
+
+        // Obtener el evento con relaciones necesarias (organizador con sus imágenes y asistentes con sus imágenes)
+        $event = Event::with(['organizer.images', 'attendees.images'])->find($eventId);
+
+        if (!$event) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Evento no encontrado'
+            ]);
+        }
+
+        // Procesar los intereses: se espera que el campo 'interests' sea una cadena separada por comas (IDs)
+        $interestIds = explode(',', $event->interests);
+        $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
+        $event->interest = $interestNames;
+
+        // Procesar los asistentes: mapear la colección para obtener datos relevantes
+        $event->attendees = $event->attendees->map(function ($user) use ($userId) {
+            $isFollowed = FollowingList::where('my_user_id', $userId)
+                ->where('user_id', $user->id)
+                ->exists();
+            $profileImage = Images::where('user_id', $user->id)->value('image');
+
+            return [
+                'id'            => $user->id,
+                'name'          => $user->name,
+                'profile_image' => $profileImage ?? '',
+                'is_followed'   => $isFollowed,
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => $event
+        ]);
+    }
+
     // Crear un evento
     public function createEvent(Request $request)
     {
