@@ -417,33 +417,40 @@ class EventController extends Controller
         $eventId = $request->input('event_id');
         $userId = $request->input('user_id');
 
-        // Buscar el evento y cargar asistentes con imágenes
+        // Buscar el evento con asistentes y sus imágenes
         $event = Event::with('attendees')->find($eventId);
 
         if (!$event) {
             return response()->json(['status' => false, 'message' => 'Evento no encontrado']);
         }
 
-        // Procesar los asistentes: mapear la colección para incluir `is_followed` y `profile_image`
+        // Verificar si la relación `attendees` está cargada correctamente
+        if ($event->attendees->isEmpty()) {
+            return response()->json(['status' => true, 'data' => []]);
+        }
+
+        // Procesar asistentes con `is_followed` e imágenes
         $attendees = $event->attendees->map(function ($user) use ($userId) {
+            // Verificar si el usuario sigue a este asistente
             $isFollowed = FollowingList::where('my_user_id', $userId)
                 ->where('user_id', $user->id)
                 ->exists();
 
             // Obtener la imagen de perfil del usuario
-            $profileImage = Images::where('user_id', $user->id)->value('image');
+            $profileImage = Images::where('user_id', $user->id)->pluck('image')->first();
 
             return [
-                'id'            => $user->id,
-                'name'          => $user->name,
-                'profile_image' => $profileImage ?? '', // Imagen o cadena vacía si no tiene
-                'is_followed'   => $isFollowed, // `true` si el usuario sigue al asistente, `false` si no
+                'id'            => $user->id ?? null,  // Evita errores si no tiene ID
+                'name'          => $user->name ?? 'Sin nombre',
+                'profile_image' => $profileImage ?? '', // Si no tiene imagen, devuelve ''
+                'is_followed'   => $isFollowed, // `true` si lo sigue, `false` si no
             ];
         });
 
-        // Retornar la respuesta con los asistentes modificados
         return response()->json(['status' => true, 'data' => $attendees]);
     }
+
+
     public function leaveEvent(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -841,5 +848,4 @@ class EventController extends Controller
 
         return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
     }
-
 }
