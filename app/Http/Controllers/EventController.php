@@ -264,6 +264,20 @@ class EventController extends Controller
 
         $event = Event::findOrFail($request->event_id);
 
+        // Obtener la cantidad actual de asistentes confirmados
+        $currentAttendeesCount = $event->attendees()->count();
+
+        // Verificar si se está actualizando la capacidad
+        if ($request->has('capacity')) {
+            $newCapacity = (int) $request->capacity;
+
+            // Asegurar que available_slots no sea negativo
+            $newAvailableSlots = max($newCapacity - $currentAttendeesCount, 0);
+
+            // Actualizar los campos en el modelo
+            $event->available_slots = $newAvailableSlots;
+        }
+
         // Actualizar solo los campos proporcionados en la solicitud
         $event->update($request->only([
             'title',
