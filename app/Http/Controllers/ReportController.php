@@ -349,7 +349,7 @@ class ReportController extends Controller
                         <line x1="9" y1="9" x2="15" y2="15"></line></svg> <span class="ms-2"> Reject </span>
                      </a>';
 
-            $deleteEvent = '<a href="#" class="btn btn-danger px-4 text-white deleteEvent d-flex align-items-center" rel=' . $item->event_id . ' data-tooltip="Delete Event">
+            $deleteEvent = '<a href="#" class="btn btn-danger px-4 text-white deleteEvent d-flex align-items-center" rel=' . $item->id . ' data-tooltip="Delete Event">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6L18.72 20.58A2 2 0 0 1 16.72 22H7.28A2 2 0 0 1 5.28 20.58L5 6m5 4v6m4-6v6"></path></svg> Delete
