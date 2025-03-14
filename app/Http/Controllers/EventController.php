@@ -232,10 +232,6 @@ class EventController extends Controller
         // Guardar el evento en la base de datos
         $event->save();
 
-        // Asignar al organizador como asistente en la tabla intermedia después de guardar
-        $event->attendees()->attach($request->organizer_id);
-        //$event->available_slots -= 1; // el organizador ocupa un espacio disponible??
-
         return response()->json(['status' => true, 'message' => 'Evento creado exitosamente', 'data' => $event]);
     }
 
