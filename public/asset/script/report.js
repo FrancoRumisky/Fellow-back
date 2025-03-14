@@ -341,7 +341,7 @@ $(document).ready(function () {
     e.preventDefault();
 
     if (user_type == 1) {
-        var id = $(this).attr("rel");
+        var reportId = $(this).attr("rel");  // Asegúrate de que aquí se está pasando el report_id
 
         swal({
             title: "Are you sure?",
@@ -355,7 +355,7 @@ $(document).ready(function () {
                     type: "POST",
                     url: `${domainUrl}deleteEventFromReport`,  // Ruta del backend
                     data: {
-                        event_id: id,
+                        report_id: reportId,  // ✅ Cambiado a report_id
                     },
                     dataType: "json",
                     success: function (response) {
@@ -392,7 +392,7 @@ $(document).ready(function () {
             iconUrl: app.cancleIcon,
         });
     }
-    });
+});
     
     $("#fetchEventReport").on("click", ".viewEvent", function (e) {
     e.preventDefault();
