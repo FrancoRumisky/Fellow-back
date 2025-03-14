@@ -13,6 +13,7 @@ use App\Models\Users;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 
 class ReportController extends Controller
@@ -461,37 +462,56 @@ class ReportController extends Controller
 
     public function deleteEventFromReport(Request $request)
     {
+        // Verificar si el report_id está en la solicitud
+        if (!$request->has('report_id')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Report ID is missing in the request.',
+            ]);
+        }
+
+        Log::info("🔍 Intentando eliminar evento desde reporte. Report ID: {$request->report_id}");
+
         // Buscar el reporte de evento
         $report = Report::where('id', $request->report_id)->first();
 
-        if ($report) {
-            // Buscar el evento
-            $event = Event::where('id', $report->event_id)->first();
-
-            if ($event) {
-                // Eliminar reportes relacionados con el evento
-                Report::where('event_id', $event->id)->delete();
-
-                // Eliminar notificaciones relacionadas con el evento
-                UserNotification::where('event_id', $event->id)->delete();
-
-                // Finalmente, eliminar el evento (esto elimina asistentes automáticamente)
-                $event->delete();
-
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Event deleted successfully',
-                ]);
-            } else {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Event not found',
-                ]);
-            }
+        if (!$report) {
+            Log::error("❌ Reporte no encontrado con ID: {$request->report_id}");
+            return response()->json([
+                'status' => false,
+                'message' => 'Report not found',
+            ]);
         }
+
+        Log::info("✅ Reporte encontrado. Event ID asociado: {$report->event_id}");
+
+        // Buscar el evento asociado al reporte
+        $event = Event::where('id', $report->event_id)->first();
+
+        if (!$event) {
+            Log::error("❌ Evento no encontrado con ID: {$report->event_id}");
+            return response()->json([
+                'status' => false,
+                'message' => 'Event not found',
+            ]);
+        }
+
+        Log::info("✅ Evento encontrado. Eliminando evento y registros relacionados.");
+
+        // Eliminar reportes relacionados con el evento
+        Report::where('event_id', $event->id)->delete();
+
+        // Eliminar notificaciones relacionadas con el evento
+        UserNotification::where('event_id', $event->id)->delete();
+
+        // Finalmente, eliminar el evento
+        $event->delete();
+
+        Log::info("🗑 Evento eliminado correctamente. ID: {$event->id}");
+
         return response()->json([
-            'status' => false,
-            'message' => 'Report not found',
+            'status' => true,
+            'message' => 'Event deleted successfully',
         ]);
     }
 }
