@@ -276,7 +276,7 @@ $(document).ready(function () {
         },
     ],
     ajax: {
-        url: `${domainUrl}eventReportList`,  // Endpoint para obtener los reportes de eventos
+        url: `${domainUrl}eventReportList`,  
         data: function (data) {},
     },
     });
@@ -297,7 +297,7 @@ $(document).ready(function () {
             if (deleteValue) {
                 $.ajax({
                     type: "POST",
-                    url: `${domainUrl}rejectEventReport`,  // Ruta del backend
+                    url: `${domainUrl}rejectEventReport`,  
                     data: {
                         report_id: id,
                     },
@@ -341,8 +341,7 @@ $(document).ready(function () {
     e.preventDefault();
 
     if (user_type == 1) {
-        var id = $(this).attr("rel");  // Asegúrate de que aquí se está pasando el report_id
-
+        var id = $(this).attr("rel");
         swal({
             title: "Are you sure?",
             icon: "error",
@@ -353,9 +352,9 @@ $(document).ready(function () {
             if (deleteValue) {
                 $.ajax({
                     type: "POST",
-                    url: `${domainUrl}deleteEventFromReport`,  // Ruta del backend
+                    url: `${domainUrl}deleteEventFromReport`,
                     data: {
-                        report_id: id,  // ✅ Cambiado a report_id
+                        report_id: id,
                     },
                     dataType: "json",
                     success: function (response) {

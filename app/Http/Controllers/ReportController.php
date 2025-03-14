@@ -497,7 +497,7 @@ class ReportController extends Controller
         Log::info("🗑 Reportes eliminados: " . $deletedReports);
 
         // Eliminar notificaciones relacionadas con el evento
-        $deletedNotifications = UserNotification::where('event_id', $event->id)->delete();
+        $deletedNotifications = UserNotification::where('item_id', $event->id)->delete();
         Log::info("🗑 Notificaciones eliminadas: " . $deletedNotifications);
 
         // Intentar eliminar el evento y verificar si realmente se eliminó
