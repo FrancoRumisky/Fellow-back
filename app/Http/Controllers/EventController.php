@@ -838,22 +838,11 @@ class EventController extends Controller
         // Notificar al usuario solicitante
         $user = User::find($request->user_id);
         if ($user) {
-            Log::info("🔍 Usuario encontrado para notificación: " . json_encode($user));
-
             if ($user->is_notification == 1) {
-                Log::info("✅ Enviando push al usuario ID: {$user->id} con token: {$user->device_token}");
-
                 $notificationMessage = "Your request to join the event '{$event->title}' has been {$request->status}.";
                 Myfunction::sendPushToUser("Union Response", $notificationMessage, $user->device_token);
-
-                Log::info("📤 Push enviada correctamente.");
-            } else {
-                Log::warning("⚠️ El usuario tiene las notificaciones desactivadas.");
             }
-        } else {
-            Log::error("❌ Usuario no encontrado en la base de datos.");
-        }
-
         return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
     }
+}
 }

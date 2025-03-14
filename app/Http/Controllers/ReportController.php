@@ -461,54 +461,37 @@ class ReportController extends Controller
     }
     public function deleteEventFromReport(Request $request)
     {
-        Log::info("🔍 Datos recibidos en la solicitud:", $request->all());
-
         // Obtener el report_id
         $reportId = (int) $request->input('report_id');
 
         // Verificar que realmente se recibió un report_id
         if (!$reportId) {
-            Log::error("❌ Report ID no recibido o es inválido.");
             return response()->json(['status' => false, 'message' => 'Invalid Report ID'], 400);
         }
 
-        Log::info("✅ Buscando reporte con ID: " . $reportId);
 
         // Verificar si el reporte existe en la BD
         $report = Report::where('id', $reportId)->first();
         if (!$report) {
-            Log::error("❌ Reporte no encontrado con ID: " . $reportId);
             return response()->json(['status' => false, 'message' => 'Report not found'], 404);
         }
-
-        Log::info("✅ Reporte encontrado. Event ID asociado: {$report->event_id}");
 
         // Buscar el evento asociado
         $event = Event::where('id', $report->event_id)->first();
         if (!$event) {
-            Log::error("❌ Evento no encontrado con ID: {$report->event_id}");
             return response()->json(['status' => false, 'message' => 'Event not found'], 404);
         }
 
-        Log::info("✅ Evento encontrado. Procediendo a eliminar...");
 
         // Eliminar reportes relacionados con el evento
         $deletedReports = Report::where('event_id', $event->id)->delete();
-        Log::info("🗑 Reportes eliminados: " . $deletedReports);
 
         // Eliminar notificaciones relacionadas con el evento
         $deletedNotifications = UserNotification::where('item_id', $event->id)->delete();
-        Log::info("🗑 Notificaciones eliminadas: " . $deletedNotifications);
 
         // Intentar eliminar el evento y verificar si realmente se eliminó
         $eventId = $event->id;
         $eventDeleted = $event->delete();
-
-        if ($eventDeleted) {
-            Log::info("🗑 Evento eliminado correctamente. ID: {$eventId}");
-        } else {
-            Log::error("❌ Error al eliminar el evento. ID: {$eventId}");
-        }
 
         return response()->json([
             'status' => $eventDeleted ? true : false,
