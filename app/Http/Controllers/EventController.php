@@ -751,11 +751,18 @@ class EventController extends Controller
             Myfunction::sendPushToUser("Solicitud de Unión", $notificationMessage, $organizer->device_token);
         }
 
-        // Siempre eliminar la notificación previa para el organizador al crear una nueva solicitud
-        UserNotification::where('item_id', $request->event_id)
-            ->where('user_id', $event->organizer_id)
-            ->where('type', Constants::notificationTypeJoinRequest)
-            ->delete();
+        // Siempre actualizar o insertar notificación en lugar de eliminarla
+        UserNotification::updateOrInsert(
+            [
+                'item_id' => $request->event_id,
+                'user_id' => $event->organizer_id,
+                'type' => Constants::notificationTypeJoinRequest
+            ],
+            [
+                'my_user_id' => (int) $request->user_id,
+                'updated_at' => now() // 🔹 Actualiza la fecha para que la notificación se muestre como nueva
+            ]
+        );
 
         // Crear siempre la notificación nueva
         $notification = new UserNotification();
@@ -842,7 +849,7 @@ class EventController extends Controller
                 $notificationMessage = "Your request to join the event '{$event->title}' has been {$request->status}.";
                 Myfunction::sendPushToUser("Union Response", $notificationMessage, $user->device_token);
             }
-        return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
+            return response()->json(['status' => true, 'message' => "Solicitud {$request->status} exitosamente."]);
+        }
     }
-}
 }
