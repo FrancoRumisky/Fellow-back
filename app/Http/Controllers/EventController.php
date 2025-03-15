@@ -751,26 +751,21 @@ class EventController extends Controller
             Myfunction::sendPushToUser("Solicitud de Unión", $notificationMessage, $organizer->device_token);
         }
 
-        // Siempre actualizar o insertar notificación en lugar de eliminarla
-        UserNotification::updateOrInsert(
-            [
-                'item_id' => $request->event_id,
-                'user_id' => $event->organizer_id,
-                'type' => Constants::notificationTypeJoinRequest
-            ],
-            [
-                'my_user_id' => (int) $request->user_id,
-                'updated_at' => now() // 🔹 Actualiza la fecha para que la notificación se muestre como nueva
-            ]
-        );
+        // Verificar si ya existe una notificación para este usuario y evento
+        $existingNotification = UserNotification::where('item_id', $request->event_id)
+            ->where('user_id', $event->organizer_id)
+            ->where('type', Constants::notificationTypeJoinRequest)
+            ->first();
 
-        // Crear siempre la notificación nueva
-        $notification = new UserNotification();
-        $notification->my_user_id = (int) $request->user_id;  // Quien solicita unirse
-        $notification->user_id = (int) $event->organizer_id;  // Quien recibe la notificación (organizador)
-        $notification->item_id = (int) $request->event_id;
-        $notification->type = Constants::notificationTypeJoinRequest;
-        $notification->save();
+        if (!$existingNotification) {
+            // Solo crear la notificación si no existe previamente
+            $notification = new UserNotification();
+            $notification->my_user_id = (int) $request->user_id;
+            $notification->user_id = (int) $event->organizer_id;
+            $notification->item_id = (int) $request->event_id;
+            $notification->type = Constants::notificationTypeJoinRequest;
+            $notification->save();
+        }
 
         return response()->json(['status' => true, 'message' => 'Solicitud enviada al organizador.']);
     }
