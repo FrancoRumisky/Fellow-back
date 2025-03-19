@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\GroupController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -136,3 +137,7 @@ Route::post('requestJoinEvent', [EventController::class, 'requestJoinEvent'])->m
 Route::post('handleJoinRequest', [EventController::class, 'handleJoinRequest'])->middleware('checkHeader');
 
 Route::get('markExpiredEvents', [EventController::class, 'markExpiredEvents'])->middleware('checkHeader');
+
+
+Route::post('updateGroupImage', [GroupController::class, 'updateGroupImage'])->middleware('checkHeader');
+Route::post('deleteGroupImage', [GroupController::class, 'deleteGroupImage'])->middleware('checkHeader');
