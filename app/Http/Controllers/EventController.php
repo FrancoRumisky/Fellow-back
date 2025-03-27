@@ -332,6 +332,83 @@ class EventController extends Controller
         ]);
     }
 
+    //filtrar evento
+    public function searchEvents(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|integer',
+            'search_query' => 'nullable|string',
+            'interest' => 'nullable|string',
+            'user_lat' => 'required|numeric',
+            'user_lng' => 'required|numeric',
+            'limit' => 'nullable|integer|min:1|max:10',
+            'offset' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
+        }
+
+        $userLat = $request->user_lat;
+        $userLng = $request->user_lng;
+        $searchQuery = $request->search_query;
+        $interest = $request->interest;
+        $limit = $request->input('limit', 10);
+        $offset = $request->input('offset', 0);
+        $currentUserId = $request->user_id;
+
+        // Base query con relaciones
+        $query = Event::query()
+            ->with(['organizer.images', 'attendees.images'])
+            ->where('status', '!=', 'completed');
+
+        // 🔍 Filtro por texto en el título
+        if (!empty($searchQuery)) {
+            $query->where('title', 'LIKE', "%$searchQuery%");
+        }
+
+        // 🧠 Filtro por intereses
+        if (!empty($interest)) {
+            $query->where('interests', 'LIKE', "%$interest%");
+        }
+
+        // Ordenar por fecha y aplicar paginación
+        $query->orderBy('start_date', 'asc')
+            ->skip($offset)
+            ->take($limit);
+
+        // Obtener y transformar eventos
+        $events = $query->get()->map(function ($event) use ($userLat, $userLng, $currentUserId) {
+            $distance = $this->calculateDistance($userLat, $userLng, $event->latitude, $event->longitude);
+            $event->distance = $distance;
+
+            // 📌 Nombres de intereses
+            $interestIds = explode(',', $event->interests);
+            $interestNames = Interest::whereIn('id', $interestIds)->pluck('title')->toArray();
+            $event->interest = $interestNames;
+
+            // 🧍 Asistentes con imagen y seguimiento
+            $event->attendees = $event->attendees->map(function ($user) use ($currentUserId) {
+                $isFollowed = FollowingList::where('my_user_id', $currentUserId)
+                    ->where('user_id', $user->id)
+                    ->exists();
+
+                $profileImage = Images::where('user_id', $user->id)->value('image');
+
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'profile_image' => $profileImage ?? '',
+                    'is_followed' => $isFollowed,
+                ];
+            });
+
+            return $event;
+        })->sortBy('distance')->values();
+
+        return response()->json(['status' => true, 'data' => $events]);
+    }
+
 
     //Reportar un evento
     public function reportEvent(Request $request)
