@@ -1,4 +1,153 @@
-/* Estilos personalizados */
+:root {
+    --color-bg: #260e69;
+    --color-highlight: #9340ff;
+    --font-main: 'DM Sans', sans-serif;
+    --font-title-size: 55px;
+    --font-subtitle-size: 25px;
+}
+
 body {
-    scroll-behavior: smooth;
+    background-color: var(--color-bg);
+    color: white;
+    font-family: var(--font-main);
+    margin: 0;
+    padding: 0;
+}
+
+.section {
+    width: 100%;
+    padding-bottom: 80px;
+}
+
+.section+.section {
+    margin-top: 200px;
+    margin-bottom: 200px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-weight: 900;
+}
+
+h1 {
+    font-size: var(--font-title-size);
+}
+
+h2,
+h3 {
+    font-size: var(--font-subtitle-size);
+}
+
+.btn-highlight {
+    background-color: var(--color-highlight);
+    color: white;
+}
+
+.text-highlight {
+    color: var(--color-highlight);
+}
+
+.logo-fellowme {
+    width: 100%;
+    max-width: 180px;
+    height: auto;
+}
+
+.hero-image {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    transition: all 0.3s ease-in-out;
+    
+}
+
+.store-buttons {
+    width: 230px;
+}
+
+.text-buttons span {
+    font-size: 16px;
+}
+
+.text-buttons strong {
+    font-size: 20px;
+}
+
+.store-img{
+    width: 50px;
+}
+
+
+/* Celulares */
+@media (max-width: 767.98px) {
+    :root{
+        --font-title-size: 25px;
+        --font-subtitle-size:20px
+    }
+    .logo-fellowme {
+        display: block;
+        margin: 0 auto;
+        width: 120px;
+    }
+    .hero-image{
+        margin-top: 0 !important;
+    }
+
+    .store-buttons {
+        width: 180px;
+    }
+
+    .text-buttons span {
+        font-size: 12px;
+    }
+
+    .text-buttons strong {
+        font-size: 14px;
+    }
+
+    .store-img {
+        width: 40px;
+    }
+   
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1024px) {
+:root {
+        --font-title-size: 30px;
+        
+    }
+    .hero-image {
+        margin-top: 0 !important;
+    }
+        .store-buttons {
+            width: 200px;
+        }
+    
+        .text-buttons span {
+            font-size: 14px;
+        }
+    
+        .text-buttons strong {
+            font-size: 16px;
+        }
+    
+        .store-img {
+            width: 45px;
+        }
+    
+}
+
+/* Laptop */
+@media (min-width: 1025px) and (max-width: 1366px) {
+    :root {
+            --font-title-size: 45px;
+        }
+                .hero-image {
+                    margin-top: 0 !important;
+                }
+    
+    
 }
