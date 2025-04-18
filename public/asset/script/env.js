@@ -1,4 +1,4 @@
-var domainUrl = "http://18.188.27.2/";
+var domainUrl = "https://fellow.me/";
 var sourceUrl = `${domainUrl}public/storage/`;
 
 var app = {
