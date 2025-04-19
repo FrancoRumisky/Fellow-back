@@ -813,7 +813,7 @@ class PostController extends Controller
             }
             $postContents->each->delete();
 
-            $userNotification = UserNotification::where('post_id', $request->post_id)->get();
+            $userNotification = UserNotification::where('item_id', $request->post_id)->get();
             $userNotification->each->delete();
 
             $post->delete();
