@@ -29,14 +29,15 @@ use function PHPUnit\Framework\isEmpty;
 
 class UsersController extends Controller
 {
-    function addCoinsToUserWalletFromAdmin(Request $request){
+    function addCoinsToUserWalletFromAdmin(Request $request)
+    {
         $result = Users::where('id', $request->id)->increment('wallet', $request->coins);
         if ($result) {
-			$response['success'] = 1;
-		} else {
-			$response['success'] = 0;
-		}
-		echo json_encode($response);
+            $response['success'] = 1;
+        } else {
+            $response['success'] = 0;
+        }
+        echo json_encode($response);
     }
 
     function logOutUser(Request $request)
@@ -226,17 +227,17 @@ class UsersController extends Controller
         $likedUsers = LikedProfile::where('my_user_id', $request->user_id)->pluck('user_id')->toArray();
 
         $profilesQuery = Users::with('images')
-                                ->has('images')
-                                ->whereNotIn('id', $blockedUsers)
-                                ->where('is_block', 0)
-                                ->when($genderPreference != 3, function ($query) use ($genderPreference) {
-                                    $query->where('gender', $genderPreference == 1 ? 1 : 2);
-                                })
-                                ->when($ageMin && $ageMax, function ($query) use ($ageMin, $ageMax) {
-                                    $query->whereBetween('age', [$ageMin, $ageMax]);
-                                })
-                                ->inRandomOrder()
-                                ->limit(15);
+            ->has('images')
+            ->whereNotIn('id', $blockedUsers)
+            ->where('is_block', 0)
+            ->when($genderPreference != 3, function ($query) use ($genderPreference) {
+                $query->where('gender', $genderPreference == 1 ? 1 : 2);
+            })
+            ->when($ageMin && $ageMax, function ($query) use ($ageMin, $ageMax) {
+                $query->whereBetween('age', [$ageMin, $ageMax]);
+            })
+            ->inRandomOrder()
+            ->limit(15);
 
         $profiles = $profilesQuery->get()->each(function ($profile) use ($likedUsers) {
             $profile->is_like = in_array($profile->id, $likedUsers);
@@ -288,7 +289,7 @@ class UsersController extends Controller
                 'message' => 'User not found!',
             ]);
         }
-        
+
         return response()->json([
             'status' => true,
             'message' => 'data found successfully!',
@@ -450,31 +451,31 @@ class UsersController extends Controller
         } else {
             $search = $request->input('search.value');
             $result =  VerifyRequest::with('user')
-                                    ->whereHas('user', function ($query) use ($search) {
-                                        $query->Where('fullname', 'LIKE', "%{$search}%")
-                                            ->orWhere('identity', 'LIKE', "%{$search}%");
-                                    })
-                                    ->offset($start)
-                                    ->limit($limit)
-                                    ->orderBy($order, $dir)
-                                    ->get();
+                ->whereHas('user', function ($query) use ($search) {
+                    $query->Where('fullname', 'LIKE', "%{$search}%")
+                        ->orWhere('identity', 'LIKE', "%{$search}%");
+                })
+                ->offset($start)
+                ->limit($limit)
+                ->orderBy($order, $dir)
+                ->get();
             $totalFiltered = VerifyRequest::with('user')
-                                            ->whereHas('user', function ($query) use ($search) {
-                                                $query->Where('fullname', 'LIKE', "%{$search}%")
-                                                    ->orWhere('identity', 'LIKE', "%{$search}%");
-                                            })
-                                            ->count();
+                ->whereHas('user', function ($query) use ($search) {
+                    $query->Where('fullname', 'LIKE', "%{$search}%")
+                        ->orWhere('identity', 'LIKE', "%{$search}%");
+                })
+                ->count();
         }
         $data = array();
         foreach ($result as $item) {
- 
+
             $imgUrl = "http://placehold.jp/150x150.png"; // Default placeholder image URL
-    
+
             if ($item->user->images->isNotEmpty() && $item->user->images[0]->image != null) {
                 $imgUrl = asset('storage/' . $item->user->images[0]->image);
             }
 
-            $image = '<img src="'.$imgUrl.'" width="50" height="50">';
+            $image = '<img src="' . $imgUrl . '" width="50" height="50">';
 
             $selfieUrl = "public/storage/" . $item->selfie;
             $selfie = '<img style="cursor: pointer;" class="img-preview" rel="' . $selfieUrl . '" src="' . $selfieUrl . '" width="50" height="50">';
@@ -486,7 +487,7 @@ class UsersController extends Controller
             $reject = '<a href=""class=" btn btn-danger text-white reject ml-2" rel=' . $item->id . ' >' . __("Reject") . '</a>';
 
             $action = '<span class="float-end d-flex">' . $approve . $reject . ' </span>';
-           
+
             $data[] = array(
                 $image,
                 $selfie,
@@ -596,13 +597,13 @@ class UsersController extends Controller
         }
 
         $fetchLikedProfile = LikedProfile::where('my_user_id', $request->my_user_id)
-                                        ->where('user_id', $request->user_id)
-                                        ->first();
+            ->where('user_id', $request->user_id)
+            ->first();
 
         $notificationExists = UserNotification::where('user_id', $request->user_id)
-                                            ->where('my_user_id', $request->my_user_id)
-                                            ->where('type', Constants::notificationTypeLikeProfile)
-                                            ->first();
+            ->where('my_user_id', $request->my_user_id)
+            ->where('type', Constants::notificationTypeLikeProfile)
+            ->first();
 
         if ($fetchLikedProfile) {
             $fetchLikedProfile->delete();
@@ -626,7 +627,6 @@ class UsersController extends Controller
                     $message = "{$my_user->fullname} has liked your profile, you should check their profile!";
                     Myfunction::sendPushToUser(env('APP_NAME'), $message, $user->device_token);
                 }
-
             }
 
             return response()->json([
@@ -693,13 +693,13 @@ class UsersController extends Controller
         }
 
         $likedProfiles = LikedProfile::where('my_user_id', $request->user_id)
-                                    ->with('user')
-                                    ->whereRelation('user' ,'is_block', 0)
-                                    ->has('user.images')
-                                    ->with('user.images')
-                                    ->orderBy('id', 'DESC')
-                                    ->get()
-                                    ->pluck('user');
+            ->with('user')
+            ->whereRelation('user', 'is_block', 0)
+            ->has('user.images')
+            ->with('user.images')
+            ->orderBy('id', 'DESC')
+            ->get()
+            ->pluck('user');
 
         foreach ($likedProfiles as $likedProfile) {
             $likedProfile->is_like = true;
@@ -764,7 +764,6 @@ class UsersController extends Controller
                 'message' => 'User not found',
             ]);
         }
-
     }
 
     function restrictLiveToUser(Request $request)
@@ -786,7 +785,6 @@ class UsersController extends Controller
                 'message' => 'User not found',
             ]);
         }
-
     }
 
     function increaseStreamCountOfUser(Request $request)
@@ -1127,7 +1125,7 @@ class UsersController extends Controller
                 $image,
                 $item->identity,
                 $item->fullname,
-                $addCoin.$item->wallet,
+                $addCoin . $item->wallet,
                 $liveEligible,
                 $item->age,
                 $gender,
@@ -1334,7 +1332,7 @@ class UsersController extends Controller
     {
         $characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
         $username = '';
-        $length = 8; 
+        $length = 8;
 
         do {
             for ($i = 0; $i < $length; $i++) {
@@ -1342,7 +1340,7 @@ class UsersController extends Controller
             }
 
             $existingUser = Users::where('username', $username)->first();
-        } while ($existingUser); 
+        } while ($existingUser);
 
         return $username;
     }
@@ -1356,7 +1354,7 @@ class UsersController extends Controller
                 return json_encode(['status' => false, 'message' => "Incorrect Identity and Password combination"]);
             }
         }
-        
+
         $data = Users::where('identity', $req->identity)->first();
 
         if ($data == null) {
@@ -1373,8 +1371,8 @@ class UsersController extends Controller
             $data =  Users::with('images')->where('id', $user->id)->first();
 
             return response()->json([
-                'status' => true, 
-                'message' => __('app.UserAddSuccessful'), 
+                'status' => true,
+                'message' => __('app.UserAddSuccessful'),
                 'data' => $data
             ]);
         } else {
@@ -1449,9 +1447,11 @@ class UsersController extends Controller
             return response()->json(['status' => false, 'message' => $msg]);
         }
 
-        $result =  Users::with('images')
-            ->Where('fullname', 'LIKE', "%{$req->keyword}%")
-            ->Where('username', 'LIKE', "%{$req->keyword}%")
+        $result = Users::with('images')
+            ->where(function ($query) use ($req) {
+                $query->where('fullname', 'LIKE', "%{$req->keyword}%")
+                    ->orWhere('username', 'LIKE', "%{$req->keyword}%");
+            })
             ->has('images')
             ->where('is_block', 0)
             ->where('anonymous', 0)
@@ -1459,13 +1459,14 @@ class UsersController extends Controller
             ->limit($req->count)
             ->get();
 
-        if (isEmpty($result)) {
+        if ($result->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'message' => 'No data found',
                 'data' => $result
             ]);
         }
+
         return response()->json([
             'status' => true,
             'message' => 'data get successfully',
@@ -1490,14 +1491,14 @@ class UsersController extends Controller
         if ($req->has("deleteimageids")) {
             Images::whereIn('id', $req->deleteimageids)->delete();
         }
-        
+
         if ($req->has("fullname")) {
             $user->fullname = Myfunction::customReplace($req->fullname);
         }
         if ($req->has("username")) {
             $existingUser = Users::where('username', $req->username)
-                                    ->where('id', '!=', $req->user_id)
-                                    ->first();
+                ->where('id', '!=', $req->user_id)
+                ->first();
             if ($existingUser !== null) {
                 return response()->json([
                     'status' => false,
@@ -1565,13 +1566,12 @@ class UsersController extends Controller
         $updatedUser = Users::where('id', $user->id)->with('images')->first();
 
         return response()->json(['status' => true, 'message' => __('app.Updatesuccessful'), 'data' => $updatedUser]);
-       
     }
 
     function blockUser(Request $request)
     {
         $user = Users::where('id', $request->user_id)->first();
-        
+
         if ($user) {
             $user->is_block = Constants::blocked;
             $user->save();
@@ -1663,16 +1663,16 @@ class UsersController extends Controller
         }
 
         $fetchUserisLiked = UserNotification::where('my_user_id', $request->my_user_id)
-                                            ->where('user_id', $request->user_id)
-                                            ->where('type', Constants::notificationTypeLikeProfile)
-                                            ->first();
+            ->where('user_id', $request->user_id)
+            ->where('type', Constants::notificationTypeLikeProfile)
+            ->first();
 
         if ($fetchUserisLiked) {
             $user->is_like = true;
         } else {
             $user->is_like = false;
         }
-        
+
         return response()->json([
             'status' => true,
             'message' =>  __('app.fetchSuccessful'),
@@ -1721,7 +1721,7 @@ class UsersController extends Controller
 
         $fromUser = $fromUserQuery->where('id', $request->my_user_id)->first();
         $toUser = $toUserQuery->where('id', $request->user_id)->first();
-       
+
         if ($fromUser && $toUser) {
             if ($fromUser == $toUser) {
                 return response()->json([
@@ -1735,57 +1735,56 @@ class UsersController extends Controller
                         'status' => false,
                         'message' => 'User is Already in following list',
                     ]);
-                } 
+                }
 
-                    $blockUserIds = explode(',', $fromUser->blocked_users);
+                $blockUserIds = explode(',', $fromUser->blocked_users);
 
-                    foreach ($blockUserIds as $blockUserId) {
-                        if ($blockUserId == $request->user_id) {
-                            return response()->json([
-                                'status' => false,
-                                'message' => 'You blocked this User',
-                            ]);
-                        }
+                foreach ($blockUserIds as $blockUserId) {
+                    if ($blockUserId == $request->user_id) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'You blocked this User',
+                        ]);
                     }
+                }
 
-                    $following = new FollowingList();
-                    $following->my_user_id = (int) $request->my_user_id;
-                    $following->user_id = (int) $request->user_id;
-                    $following->save();
+                $following = new FollowingList();
+                $following->my_user_id = (int) $request->my_user_id;
+                $following->user_id = (int) $request->user_id;
+                $following->save();
 
-                    $followingCount = $fromUserQuery->where('id', $request->my_user_id)->first();
-                    $followingCount->following += 1;
-                    $followingCount->save();
+                $followingCount = $fromUserQuery->where('id', $request->my_user_id)->first();
+                $followingCount->following += 1;
+                $followingCount->save();
 
-                    $followersCount = $toUserQuery->where('id', $request->user_id)->first();
-                    $followersCount->followers += 1;
-                    $followersCount->save();
- 
-                    if ($toUser->is_notification == 1) {
-                        $notificationDesc = $fromUser->fullname . ' has stared following you.';
-                        Myfunction::sendPushToUser(env('APP_NAME'), $notificationDesc, $toUser->device_token);
-                    }
-                    
-                    $updatedUser = Users::where('id', $request->user_id)->first();
-                    
-                    $updatedUser->images;
-                    
-                    $following->user = $updatedUser;
-                    
-                    $type = Constants::notificationTypeFollow;
+                $followersCount = $toUserQuery->where('id', $request->user_id)->first();
+                $followersCount->followers += 1;
+                $followersCount->save();
 
-                    $userNotification = new UserNotification();
-                    $userNotification->my_user_id = (int) $request->my_user_id;
-                    $userNotification->user_id = (int) $request->user_id;
-                    $userNotification->type = $type;
-                    $userNotification->save();
+                if ($toUser->is_notification == 1) {
+                    $notificationDesc = $fromUser->fullname . ' has stared following you.';
+                    Myfunction::sendPushToUser(env('APP_NAME'), $notificationDesc, $toUser->device_token);
+                }
 
-                    return response()->json([
-                        'status' => true,
-                        'message' => 'User Added in Following List',
-                        'data' => $following, 
-                    ]);
-                
+                $updatedUser = Users::where('id', $request->user_id)->first();
+
+                $updatedUser->images;
+
+                $following->user = $updatedUser;
+
+                $type = Constants::notificationTypeFollow;
+
+                $userNotification = new UserNotification();
+                $userNotification->my_user_id = (int) $request->my_user_id;
+                $userNotification->user_id = (int) $request->user_id;
+                $userNotification->type = $type;
+                $userNotification->save();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'User Added in Following List',
+                    'data' => $following,
+                ]);
             }
         } else {
             return response()->json([
@@ -1793,7 +1792,6 @@ class UsersController extends Controller
                 'message' => 'User Not Found',
             ]);
         }
-     
     }
 
     public function fetchFollowingList(Request $request)
@@ -1814,17 +1812,17 @@ class UsersController extends Controller
         $blockUserIds = explode(',', $user->blocked_users);
 
         $fetchFollowingList = FollowingList::whereRelation('user', 'is_block', 0)
-                                            ->whereNotIn('user_id', $blockUserIds)
-                                            ->where('my_user_id', $request->my_user_id)
-                                            // ->with('user', 'user.images')
-                                            ->with(['user' => function ($query) {
-                                                $query->whereHas('images');
-                                            }, 'user.images'])
-                                            ->offset($request->start)
-                                            ->limit($request->limit)
-                                            ->get()
-                                            ->pluck('user');
- 
+            ->whereNotIn('user_id', $blockUserIds)
+            ->where('my_user_id', $request->my_user_id)
+            // ->with('user', 'user.images')
+            ->with(['user' => function ($query) {
+                $query->whereHas('images');
+            }, 'user.images'])
+            ->offset($request->start)
+            ->limit($request->limit)
+            ->get()
+            ->pluck('user');
+
         return response()->json([
             'status' => true,
             'message' => 'Fetch Following List',
@@ -1847,22 +1845,22 @@ class UsersController extends Controller
         }
 
         $fetchFollowersList = FollowingList::where('user_id', $request->user_id)
-                                            ->whereNotIn('my_user_id', function ($query) use ($request) {
-                                                $query->select('id')
-                                                    ->from('users')
-                                                    ->whereRaw("FIND_IN_SET(?, blocked_users)", [$request->user_id]);
-                                            })
-                                            ->with('followerUser', 'followerUser.images')
-                                            ->offset($request->start)
-                                            ->limit($request->limit)
-                                            ->get()
-                                            ->pluck('followerUser');
+            ->whereNotIn('my_user_id', function ($query) use ($request) {
+                $query->select('id')
+                    ->from('users')
+                    ->whereRaw("FIND_IN_SET(?, blocked_users)", [$request->user_id]);
+            })
+            ->with('followerUser', 'followerUser.images')
+            ->offset($request->start)
+            ->limit($request->limit)
+            ->get()
+            ->pluck('followerUser');
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Fetch Followers List',
-                'data' => $fetchFollowersList,
-            ]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Fetch Followers List',
+            'data' => $fetchFollowersList,
+        ]);
     }
 
     public function unfollowUser(Request $request)
@@ -1903,9 +1901,9 @@ class UsersController extends Controller
                     $followersCount->save();
 
                     $userNotification = UserNotification::where('my_user_id', $request->my_user_id)
-                                                            ->where('user_id', $request->user_id)
-                                                            ->where('type', Constants::notificationTypeFollow)
-                                                            ->get();
+                        ->where('user_id', $request->user_id)
+                        ->where('type', Constants::notificationTypeFollow)
+                        ->get();
                     $userNotification->each->delete();
 
                     $followingList->delete();
@@ -1945,21 +1943,21 @@ class UsersController extends Controller
         $user = Users::where('id', $request->my_user_id)->first();
 
         if ($user) {
-            
+
             $blockUserIds = explode(',', $user->block_user_ids);
 
             $followingUsers = FollowingList::where('my_user_id', $request->my_user_id)
-                                        ->whereRelation('story', 'created_at', '>=', now()->subDay()->toDateTimeString())
-                                        ->with('user', 'user.images')
-                                        ->whereRelation('user', 'is_block', 0)
-                                        ->get()
-                                        ->pluck('user');
+                ->whereRelation('story', 'created_at', '>=', now()->subDay()->toDateTimeString())
+                ->with('user', 'user.images')
+                ->whereRelation('user', 'is_block', 0)
+                ->get()
+                ->pluck('user');
 
-            foreach($followingUsers as $followingUser) {
+            foreach ($followingUsers as $followingUser) {
                 $stories = Story::where('user_id', $followingUser->id)
-                                ->where('created_at', '>=', now()->subDay()->toDateTimeString())
-                                ->get();
-                                
+                    ->where('created_at', '>=', now()->subDay()->toDateTimeString())
+                    ->get();
+
                 foreach ($stories as $story) {
                     $story->storyView = $story->view_by_user_ids ? in_array($request->my_user_id, explode(',', $story->view_by_user_ids)) : false;
                 }
@@ -1967,13 +1965,13 @@ class UsersController extends Controller
             }
 
             $fetchPosts = Post::with('content')
-                                ->inRandomOrder()
-                                ->with(['user','user.stories','user.images'])
-                                ->whereRelation('user', 'is_block', 0)
-                                ->whereNotIn('user_id', array_merge($blockUserIds))
-                                ->limit(10)
-                                ->get();
-           
+                ->inRandomOrder()
+                ->with(['user', 'user.stories', 'user.images'])
+                ->whereRelation('user', 'is_block', 0)
+                ->whereNotIn('user_id', array_merge($blockUserIds))
+                ->limit(10)
+                ->get();
+
 
             if (!$fetchPosts->isEmpty()) {
 
@@ -1985,7 +1983,7 @@ class UsersController extends Controller
                         $fetchPost->is_like = 0;
                     }
                 }
-                
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Fetch posts',
@@ -2010,17 +2008,12 @@ class UsersController extends Controller
                     'posts' => $fetchPosts,
                 ]
             ]);
-
-
-
         } else {
             return response()->json([
                 'status' => false,
                 'message' => 'User Not Found',
             ]);
         }
-
-
     }
 
     public function deleteUserFromAdmin(Request $request)
@@ -2074,7 +2067,7 @@ class UsersController extends Controller
 
             $post->delete();
         }
-        
+
         $stories = Story::where('user_id', $user->id)->get();
         foreach ($stories as $story) {
             GlobalFunction::deleteFile($story->content);
@@ -2099,7 +2092,7 @@ class UsersController extends Controller
             $following->delete();
         }
 
-        
+
         UserNotification::where('user_id', $user->id)->delete();
         LiveApplications::where('user_id', $user->id)->delete();
         LiveHistory::where('user_id', $user->id)->delete();
@@ -2112,5 +2105,4 @@ class UsersController extends Controller
 
         return response()->json(['status' => true, 'message' => "Account Deleted Successfully !"]);
     }
-
 }
