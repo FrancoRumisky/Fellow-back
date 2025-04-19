@@ -1417,7 +1417,7 @@ class UsersController extends Controller
             ->limit($req->count)
             ->get();
 
-        if (isEmpty($result)) {
+        if ($result->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'message' => 'No data found',
