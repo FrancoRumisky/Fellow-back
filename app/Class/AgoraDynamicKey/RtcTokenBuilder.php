@@ -41,6 +41,7 @@ class RtcTokenBuilder
     #                    Agora Service within 10 minutes after the token is 
     #                    generated, set expireTimestamp as the current 
     public static function buildTokenWithUserAccount($appID, $appCertificate, $channelName, $userAccount, $role, $privilegeExpireTs){
+        error_log("[AGORA] init() -> appID={$appID}, certificate={$appCertificate}, channel={$channelName}, user={$userAccount}");
         $token = AccessToken::init($appID, $appCertificate, $channelName, $userAccount);
         $Privileges = AccessToken::Privileges;
         $token->addPrivilege($Privileges["kJoinChannel"], $privilegeExpireTs);

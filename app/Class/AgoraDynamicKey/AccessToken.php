@@ -85,7 +85,7 @@ class AccessToken
         if (is_string($str) && $str !== "") {
             return true;
         }
-        echo $name . " check failed, should be a non-empty string";
+        error_log("[AGORA] {$name} check failed, should be a non-empty string");
         return false;
     }
 
