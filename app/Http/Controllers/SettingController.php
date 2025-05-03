@@ -26,8 +26,8 @@ class SettingController extends Controller
          $msg = $messages[0];
          return response()->json(['status' => false, 'message' => $msg]);
       }
-      $appID = env('AGORA_APP_ID');
-      $appCertificate = env('AGORA_APP_CERT');
+      $appID = config('services.agora.id');
+      $appCertificate = config('services.agora.certificate');
       $channelName = $request->channelName;
       $role = RtcTokenBuilder::RolePublisher;
       $expireTimeInSeconds = 7200;
