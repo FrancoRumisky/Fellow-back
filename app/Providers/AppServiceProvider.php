@@ -13,7 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $dotenv = \Dotenv\Dotenv::createImmutable(base_path());
+        $dotenv->load();
     }
 
     /**
