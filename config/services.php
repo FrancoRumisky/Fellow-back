@@ -14,11 +14,6 @@ return [
     |
     */
 
-    'agora' => [
-        'id' => env('AGORA_APP_ID'),
-        'certificate' => env('AGORA_APP_CERT'),
-    ],
-
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

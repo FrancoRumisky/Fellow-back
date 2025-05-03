@@ -1,8 +1,4 @@
 <?php
-
-dd(env('AGORA_APP_ID'));
-
-
 return [
 
     /*
@@ -136,6 +132,10 @@ return [
     | this array to grant expanded functionality to your applications.
     |
     */
+
+    'agora_id' => env('AGORA_APP_ID'),
+    'agora_cert' => env('AGORA_APP_CERT'),
+
 
     'providers' => [
 
