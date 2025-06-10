@@ -1365,6 +1365,7 @@ class UsersController extends Controller
             $user->device_type = $req->device_type;
             $user->login_type = $req->login_type;
             $user->username = $this->generateUniqueUsername();
+            $user->can_go_live = 2;
 
             $user->save();
 
