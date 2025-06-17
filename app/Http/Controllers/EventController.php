@@ -290,6 +290,12 @@ class EventController extends Controller
             'interests'
         ]));
 
+        // Cambiar estado solo si antes estaba como 'complete'
+        if ($event->status === 'completed') {
+            $event->status = 'active';
+            $event->save(); // Guardar el cambio de estado
+        }
+
         return response()->json(['status' => true, 'message' => 'Event updated successfully', 'data' => $event]);
     }
 
