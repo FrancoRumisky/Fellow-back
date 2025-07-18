@@ -1450,8 +1450,15 @@ class UsersController extends Controller
 
         $result = Users::with('images')
             ->where(function ($query) use ($req) {
-                $query->where('fullname', 'LIKE', "%{$req->keyword}%")
+            $query->where(function ($q) use ($req) {
+                $q->where('fullname', 'LIKE', "%{$req->keyword}%")
                     ->orWhere('username', 'LIKE', "%{$req->keyword}%");
+
+                // ✅ Si el keyword es un número, también buscar por ID
+                if (is_numeric($req->keyword)) {
+                    $q->orWhere('id', $req->keyword);
+                }
+            });
             })
             ->has('images')
             ->where('is_block', 0)
