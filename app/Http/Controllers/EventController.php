@@ -243,15 +243,17 @@ class EventController extends Controller
             'title' => 'sometimes|string',
             'description' => 'sometimes|string',
             'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date',
+            'end_date' => 'sometimes|date|after_or_equal:start_date',
             'start_time' => 'sometimes|string',
             'end_time' => 'sometimes|string',
             'location' => 'sometimes|string',
             'latitude' => 'sometimes|numeric',
             'longitude' => 'sometimes|numeric',
-            'capacity' => 'sometimes|integer',
+            'capacity' => 'sometimes|integer|min:1',
             'is_public' => 'sometimes|boolean',
-            'interests' => 'sometimes|string', // Intereses como string separado por comas
+            'interests' => 'sometimes|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'video' => 'nullable|file|mimes:mp4,mov,avi,webm|max:102400',
         ]);
 
         if ($validator->fails()) {
@@ -260,22 +262,20 @@ class EventController extends Controller
 
         $event = Event::findOrFail($request->event_id);
 
-        // Obtener la cantidad actual de asistentes confirmados
-        $currentAttendeesCount = $event->attendees()->count();
-
-        // Verificar si se está actualizando la capacidad
-        if ($request->has('capacity')) {
-            $newCapacity = (int) $request->capacity;
-
-            // Asegurar que available_slots no sea negativo
-            $newAvailableSlots = max($newCapacity - $currentAttendeesCount, 0);
-
-            // Actualizar los campos en el modelo
-            $event->available_slots = $newAvailableSlots;
+        // Actualizar imagen si se sube una nueva
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('events', 'public');
+            $event->image = $imagePath;
         }
 
-        // Actualizar solo los campos proporcionados en la solicitud
-        $event->update($request->only([
+        // Actualizar video si se sube uno nuevo
+        if ($request->hasFile('video')) {
+            $videoPath = $request->file('video')->store('events', 'public');
+            $event->video = $videoPath;
+        }
+
+        // Actualizar campos dinámicamente
+        $event->fill($request->only([
             'title',
             'description',
             'start_date',
@@ -290,13 +290,21 @@ class EventController extends Controller
             'interests'
         ]));
 
-        // Cambiar estado solo si antes estaba como 'complete'
-        if ($event->status === 'completed') {
-            $event->status = 'active';
-            $event->save(); // Guardar el cambio de estado
+        // Recalcular espacios disponibles si se cambió la capacidad
+        if ($request->has('capacity')) {
+            $currentAttendeesCount = $event->attendees()->count();
+            $newAvailableSlots = max((int)$request->capacity - $currentAttendeesCount, 0);
+            $event->available_slots = $newAvailableSlots;
         }
 
-        return response()->json(['status' => true, 'message' => 'Event updated successfully', 'data' => $event]);
+        // Reactivar evento si estaba completado
+        if ($event->status === 'completed') {
+            $event->status = 'active';
+        }
+
+        $event->save();
+
+        return response()->json(['status' => true, 'message' => 'Evento actualizado exitosamente', 'data' => $event]);
     }
 
     // Eliminar un evento
