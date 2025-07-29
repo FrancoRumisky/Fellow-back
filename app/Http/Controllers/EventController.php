@@ -263,13 +263,31 @@ class EventController extends Controller
         $event = Event::findOrFail($request->event_id);
 
         // Actualizar imagen si se sube una nueva
+        $imagePath = null;
         if ($request->hasFile('image')) {
+            // Eliminar imagen anterior si existe
+            if ($event->image) {
+                $oldImagePath = public_path("storage/" . $event->image);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+
+            // Subir nueva imagen
             $imagePath = $request->file('image')->store('events', 'public');
             $event->image = $imagePath;
         }
 
         // Actualizar video si se sube uno nuevo
+        $videoPath = null;
         if ($request->hasFile('video')) {
+            if ($event->video) {
+                $oldVideoPath = public_path("storage/" . $event->video);
+                if (file_exists($oldVideoPath)) {
+                    unlink($oldVideoPath);
+                }
+            }
+
             $videoPath = $request->file('video')->store('events', 'public');
             $event->video = $videoPath;
         }
