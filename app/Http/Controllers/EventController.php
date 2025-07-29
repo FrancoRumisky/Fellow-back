@@ -292,6 +292,16 @@ class EventController extends Controller
             $event->video = $videoPath;
         }
 
+        if ($request->has('remove_video') && $request->remove_video == '1') {
+            if ($event->video) {
+                $videoPath = storage_path('app/public/' . $event->video);
+                if (file_exists($videoPath)) {
+                    unlink($videoPath);
+                }
+                $event->video = null;
+            }
+        }
+
         // Actualizar campos dinámicamente
         $event->fill($request->only([
             'title',
